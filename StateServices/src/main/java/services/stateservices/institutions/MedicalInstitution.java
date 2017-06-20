@@ -3,6 +3,7 @@ package services.stateservices.institutions;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.Date;
 import services.stateservices.entities.EduRequest;
 import services.stateservices.entities.Feedback;
 import services.stateservices.entities.Ticket;
@@ -75,9 +76,10 @@ public class MedicalInstitution extends Institution {
         }
         Set<Ticket> doctorTickets = new HashSet<>();
         Iterator<Ticket> i = tickets.iterator();
+        Date currentDate = new Date();
         while (i.hasNext()) {
                 Ticket t = i.next(); // must be called before you can call i.remove()
-                if (t.getDoctor().equals(doctor)) {
+                if (t.getDoctor().equals(doctor) && t.getDate().after(currentDate)) {
                     doctorTickets.add(t);
                 }
         }
