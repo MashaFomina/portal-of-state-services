@@ -195,9 +195,13 @@ public class UserMapper implements UserMapperInterface<User> {
         Statement extractUserStatement = connection.createStatement();
         ResultSet rs = extractUserStatement.executeQuery(userSelectStatement);
 
+        User user;
         while (rs.next()) {
-            all.add(findByID(rs.getInt("id")));
+            user = findByID(rs.getInt("id"));
+            if (user != null)
+                all.add(user);
         }
+
         return all;
     }
 
@@ -209,8 +213,11 @@ public class UserMapper implements UserMapperInterface<User> {
         extractDoctorStatement.setInt(1, institutionId);
         ResultSet rs = extractDoctorStatement.executeQuery();
 
+        User user;
         while (rs.next()) {
-            all.add((Doctor) findByID(rs.getInt("id")));
+            user = findByID(rs.getInt("user"));
+            if (user != null)
+                all.add((Doctor) user);
         }
 
         return all;
@@ -227,7 +234,7 @@ public class UserMapper implements UserMapperInterface<User> {
         int institutionId = rs.getInt("institution_id");
         int approved = rs.getInt("approved");
         
-        MedicalInstitution institution = null; //medicalInstitutionMapper.findById(institutionId);
+        MedicalInstitution institution = medicalInstitutionMapper.findByID(institutionId);
         if (institution == null)
             return null;
         
@@ -245,7 +252,8 @@ public class UserMapper implements UserMapperInterface<User> {
         String email = rs.getString("email");
         String policy = rs.getString("policy");
         String passport = rs.getString("passport");
-        java.util.Date birthDate = rs.getDate("birth_date");
+        Timestamp timestamp = rs.getTimestamp("birth_date");
+        java.util.Date birthDate = timestamp != null ? new java.util.Date(timestamp.getTime()) : null;
         
         Citizen newCitizen = new Citizen(login, password, fullName, email, policy, passport, birthDate);
         newCitizen.setId(id);
@@ -258,11 +266,24 @@ public class UserMapper implements UserMapperInterface<User> {
         
         List<EduRequest> eduRequests = eduRequestMapper.findAllForUser(id);
         for (EduRequest it : eduRequests) {
-            newCitizen.addEduRequest(it);
+            if (it.getInstitution() == null) {
+                it.setInstitution(educationalInstitutionMapper.findByID(eduRequestMapper.getInstitutionId(it.getId())));
+            }
+                
+            if (it.getParent() == null ) {
+                it.setParent(newCitizen);
+                if (it.getChild().getParent() == null) it.getChild().setParent(newCitizen);
+            }
+                
+            if (it.getInstitution() != null ) {
+                newCitizen.addEduRequest(it);
+            }
         }
         
         List<Ticket> tickets = ticketMapper.findAllForUser(id);
         for (Ticket it : tickets) {
+            it.setUser(newCitizen);
+            if (it.getChild() != null) it.getChild().setParent(newCitizen);
             newCitizen.addTicket(it);
         }
 
@@ -282,12 +303,12 @@ public class UserMapper implements UserMapperInterface<User> {
         User representative = null;
         switch (userType) {
             case MEDICAL_REPRESENTATIVE:
-                MedicalInstitution medicalInstitution = null; //medicalInstitutionMapper.findById(institutionId);
+                MedicalInstitution medicalInstitution = medicalInstitutionMapper.findByID(institutionId);
                 if (medicalInstitution != null)
                     representative = new MedicalRepresentative(login, password, fullName, email, medicalInstitution, (approved == 1));
                 break;
             case EDUCATIONAL_REPRESENTATIVE:
-                EducationalInstitution educationalInstitution = null; //educationalInstitutionMapper.findById(institutionId);
+                EducationalInstitution educationalInstitution = educationalInstitutionMapper.findByID(institutionId);
                 if (educationalInstitution != null)
                     representative = new EducationalRepresentative(login, password, fullName, email, educationalInstitution, (approved == 1));
                 break;
@@ -305,9 +326,21 @@ public class UserMapper implements UserMapperInterface<User> {
         if (!users.contains(item)) {
             switch (item.getUserType()) {
                 case ADMINISTRATOR:
+                    int id = insertUser(item);
+                    if (id > 0) {
+                        item.setId(id);
+                        users.add(item);
+                    }
                     break;
                 case CITIZEN:
                     makeAddCitizenTransaction((Citizen) item);
+                    break;
+                case DOCTOR:
+                    makeAddDoctorTransaction((Doctor) item);
+                    break;
+                case EDUCATIONAL_REPRESENTATIVE:
+                case MEDICAL_REPRESENTATIVE:
+                    makeAddRepresentativeTransaction(item);
                     break;
             }
         }
@@ -332,32 +365,91 @@ public class UserMapper implements UserMapperInterface<User> {
         }
     }
     
+    private int insertUser(User item) throws SQLException {
+        String generatedColumns[] = {"id"};
+        String insertSQL = "INSERT INTO users(login, full_name, email, password, user_type) VALUES (?, ?, ?, ?, ?);";
+        PreparedStatement insertStatement = connection.prepareStatement(insertSQL, generatedColumns);
+        insertStatement.setString(1, item.getLogin());
+        insertStatement.setString(2, item.getFullName());
+        insertStatement.setString(3, item.getEmail());
+        insertStatement.setString(4, item.getPassword());
+        insertStatement.setString(5, item.getUserType().getText());
+        insertStatement.execute();
+        ResultSet rs = insertStatement.getGeneratedKeys();
+        if (rs.next()) {
+            return rs.getInt(1);
+        }
+        return 0;
+    }
+    
     private void makeAddCitizenTransaction(Citizen item) throws SQLException {
         try {
             connection.setAutoCommit(false);
-            String generatedColumns[] = {"id"};
-            String insertSQL = "INSERT INTO users(login, full_name, email, password, user_type) VALUES (?, ?, ?, SHA1(?), \"CITIZEN\");";
-            PreparedStatement insertStatement = connection.prepareStatement(insertSQL, generatedColumns);
-            insertStatement.setString(1, item.getLogin());
-            insertStatement.setString(2, item.getFullName());
-            insertStatement.setString(3, item.getEmail());
-            insertStatement.setString(4, item.getPassword());
-            insertStatement.execute();
-            ResultSet rs = insertStatement.getGeneratedKeys();
-            if (rs.next()) {
-                int id = rs.getInt(1);
-                item.setId((int) id);
-                insertSQL = "INSERT INTO citizens (user, policy, passport, birth_date) VALUES (?, ?, ?, ?);";
-                PreparedStatement insertStatement1 = connection.prepareStatement(insertSQL);
-                insertStatement1.setInt(1, id);
-                insertStatement1.setString(2, item.getPolicy());
-                insertStatement1.setString(3, item.getPassport());
-                insertStatement1.setDate(4, new java.sql.Date(item.getBirthDate().getTime()));
-                insertStatement1.execute();
+            int id = insertUser(item);
+            if (id > 0) {
+                item.setId(id);
+                String insertSQL = "INSERT INTO citizens (user, policy, passport, birth_date) VALUES (?, ?, ?, ?);";
+                PreparedStatement insertStatement = connection.prepareStatement(insertSQL);
+                insertStatement.setInt(1, id);
+                insertStatement.setString(2, item.getPolicy());
+                insertStatement.setString(3, item.getPassport());
+                insertStatement.setTimestamp(4, new Timestamp(item.getBirthDate().getTime()));
+                insertStatement.execute();
+                users.add(item);
             } else {
                 throw new Exception();
             }
-            users.add(item);
+            connection.commit();
+        } catch (Exception e) {
+            connection.rollback();
+        } finally {
+            connection.setAutoCommit(true);
+        }
+    }
+    
+    private void makeAddDoctorTransaction(Doctor item) throws SQLException {
+        try {
+            connection.setAutoCommit(false);
+            int id = insertUser(item);
+            if (id > 0) {
+                item.setId((int) id);
+                String insertSQL = "INSERT INTO doctors (user, position, summary, institution_id, approved) VALUES (?, ?, ?, ?, ?);";
+                PreparedStatement insertStatement = connection.prepareStatement(insertSQL);
+                insertStatement.setInt(1, id);
+                insertStatement.setString(2, item.getPosition());
+                insertStatement.setString(3, item.getSummary());
+                insertStatement.setInt(4, item.getInstitution().getId());
+                insertStatement.setInt(5, item.isApproved() ? 1 : 0);
+                insertStatement.execute();
+                users.add(item);
+            } else {
+                throw new Exception();
+            }
+            connection.commit();
+        } catch (Exception e) {
+            connection.rollback();
+        } finally {
+            connection.setAutoCommit(true);
+        }
+    }
+    
+    private void makeAddRepresentativeTransaction(User user) throws SQLException {
+        try {
+            connection.setAutoCommit(false);
+            int id = insertUser(user);
+            if (id > 0) {
+                user.setId(id);
+                InstitutionRepresentative item = (user.getUserType().equals(User.UserType.MEDICAL_REPRESENTATIVE)) ? (MedicalRepresentative) user : (EducationalRepresentative) user;
+                String insertSQL = "INSERT INTO representatives (user, institution_id, approved) VALUES (?, ?, ?);";
+                PreparedStatement insertStatement = connection.prepareStatement(insertSQL);
+                insertStatement.setInt(1, id);
+                insertStatement.setInt(2, item.getInstitution().getId());
+                insertStatement.setInt(3, item.isApproved() ? 1 : 0);
+                insertStatement.execute();
+                users.add(user);
+            } else {
+                throw new Exception();
+            }
             connection.commit();
         } catch (Exception e) {
             connection.rollback();
@@ -404,7 +496,7 @@ public class UserMapper implements UserMapperInterface<User> {
         return user.signIn(encryptPassword(password));
     }
         
-    protected static String encryptPassword(String password) {
+    public static String encryptPassword(String password) {
         String sha1 = "";
         try
         {

@@ -56,7 +56,7 @@ public class MedicalInstitution extends Institution {
     }
     
     public void addTicket(Ticket ticket) throws NoRightsException {
-        if (!ticket.getInstitution().equals(this)) {
+        if (ticket.getInstitution() != null && !ticket.getInstitution().equals(this)) {
             throw new NoRightsException("You have no ability to add ticket of other institution to this institution!");
         }
         if (!tickets.contains(ticket)) {
@@ -91,7 +91,7 @@ public class MedicalInstitution extends Institution {
     }
     
     @Override
-    public boolean addFeedback(Feedback feedback) throws NoRightsException {
+    public boolean saveFeedback(Feedback feedback) throws NoRightsException {
         if (!feedback.getInstitution().equals(this)) {
             throw new NoRightsException("You have no ability to add feedback of other institution to this institution!");
         }

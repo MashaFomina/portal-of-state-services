@@ -21,14 +21,16 @@ import services.stateservices.errors.NoRightsException;
 import services.stateservices.institutions.EducationalInstitution;
 import services.stateservices.storage.Gateway;
 import services.stateservices.storage.Mapper;
+import services.stateservices.storage.StorageRepository;
 import services.stateservices.storage.entities.*;
 import services.stateservices.storage.user.UserMapper;
-import services.stateservices.user.Doctor;
+import services.stateservices.user.*;
 
 public class EducationalInstitutionMapper extends InstitutionMapper implements Mapper<EducationalInstitution> {
     private static Set<EducationalInstitution> educationalInstitutions = new HashSet<>();
     private static EduRequestMapper eduRequestMapper;
     private static FeedbackMapper feedbackMapper;
+    private static StorageRepository repository = null;
 
     public EducationalInstitutionMapper() throws IOException, SQLException {
         if (connection == null)
@@ -37,6 +39,8 @@ public class EducationalInstitutionMapper extends InstitutionMapper implements M
             eduRequestMapper = new EduRequestMapper();
         if (feedbackMapper == null)
             feedbackMapper = new FeedbackMapper();
+        if (repository == null)
+            repository = StorageRepository.getInstance();
     }
  
     public List<EducationalInstitution> findAllByDistrict(String city, String district) throws SQLException {
@@ -48,8 +52,11 @@ public class EducationalInstitutionMapper extends InstitutionMapper implements M
         selectStatement.setString(2, district);
         ResultSet rs = selectStatement.executeQuery();
 
+        EducationalInstitution institution;
         while (rs.next()) {
-            all.add(findByID(rs.getInt("id")));
+            institution = findByID(rs.getInt("id"));
+            if (institution != null)
+                all.add(institution);
         }
 
         selectStatement.close();
@@ -83,13 +90,13 @@ public class EducationalInstitutionMapper extends InstitutionMapper implements M
         
         selectSQL = "SELECT * FROM educational_institutions_seats WHERE institution_id = ?;";
         PreparedStatement selectSeatsStatement = connection.prepareStatement(selectSQL);
-        selectStatement.setInt(1, eid);
-        ResultSet rs1 = selectStatement.executeQuery();
+        selectSeatsStatement.setInt(1, eid);
+        ResultSet rs1 = selectSeatsStatement.executeQuery();
 
         while (rs1.next()) {
-            int classNumber = rs.getInt("class_number");
-            seats.put(classNumber, rs.getInt("seats"));
-            busySeats.put(classNumber, rs.getInt("busy_seats"));
+            int classNumber = rs1.getInt("class_number");
+            seats.put(classNumber, rs1.getInt("seats"));
+            busySeats.put(classNumber, rs1.getInt("busy_seats"));
         }
         selectSeatsStatement.close();
 
@@ -100,7 +107,19 @@ public class EducationalInstitutionMapper extends InstitutionMapper implements M
         List<EduRequest> eduRequests = eduRequestMapper.findAllForInstitution(id);
         for (EduRequest it : eduRequests) {
             try {
-                newEducationalInstitution.addEduRequest(it);
+                if (it.getInstitution() == null) {
+                    it.setInstitution(newEducationalInstitution);
+                }
+                
+                if (it.getParent() == null ) {
+                    Citizen parent = repository.getCitizen(eduRequestMapper.getParentId(it.getId()));
+                    it.setParent(parent);
+                    if (it.getChild().getParent() == null) it.getChild().setParent(parent);
+                }
+                
+                if (it.getParent() != null ) {
+                    newEducationalInstitution.addEduRequest(it);
+                }
             }   catch (NoRightsException ex) {
                 Logger.getLogger(EducationalInstitutionMapper.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -108,11 +127,7 @@ public class EducationalInstitutionMapper extends InstitutionMapper implements M
         
         List<Feedback> feedbacks = feedbackMapper.findAllForInstitution(id);
         for (Feedback it : feedbacks) {
-            try {
-                newEducationalInstitution.addFeedback(it);
-            }   catch (NoRightsException ex) {
-                Logger.getLogger(EducationalInstitutionMapper.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            newEducationalInstitution.addFeedback(it);
         }
         
         return newEducationalInstitution;
@@ -126,8 +141,11 @@ public class EducationalInstitutionMapper extends InstitutionMapper implements M
         Statement selectStatement = connection.createStatement();
         ResultSet rs = selectStatement.executeQuery(selectSQL);
 
+        EducationalInstitution institution;
         while (rs.next()) {
-            all.add(findByID(rs.getInt("id")));
+            institution = findByID(rs.getInt("id"));
+            if (institution != null)
+                all.add(institution);
         }
 
         selectStatement.close();

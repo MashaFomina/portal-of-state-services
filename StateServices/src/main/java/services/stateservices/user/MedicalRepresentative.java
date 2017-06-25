@@ -4,6 +4,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import services.stateservices.errors.NoRightsException;
 import services.stateservices.errors.InvalidTicketsDatesException;
 import services.stateservices.institutions.MedicalInstitution;
@@ -11,6 +13,7 @@ import services.stateservices.storage.StorageRepository;
 import services.stateservices.entities.Ticket;
 import org.apache.commons.lang.time.DateUtils;
 import services.stateservices.entities.Feedback;
+import services.stateservices.errors.AlreadyExistsException;
 
 public class MedicalRepresentative extends User implements InstitutionRepresentative {
     private MedicalInstitution institution;
@@ -31,10 +34,16 @@ public class MedicalRepresentative extends User implements InstitutionRepresenta
         repository = StorageRepository.getInstance();
     }
     
-    public void addDoctor(String login, String password, String fullName, String email, String position, String summary) throws NoRightsException {
-        repository.addDoctor(login, password, fullName, email, institution, position, summary, true);
-        Doctor doctor = repository.getDoctor(login);
-        institution.addDoctor(doctor);
+    public boolean addDoctor(String login, String password, String fullName, String email, String position, String summary) throws NoRightsException {
+        Doctor newDoctor = new Doctor(login, password, fullName, email, institution, position, summary, true);
+        boolean result = false;
+        try {
+            result = repository.addUser(newDoctor);
+            institution.addDoctor(newDoctor);
+        } catch (AlreadyExistsException ex) {
+            Logger.getLogger(MedicalRepresentative.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return result;
     }
     
     public void removeDoctor(Doctor doctor) throws NoRightsException {
@@ -149,13 +158,13 @@ public class MedicalRepresentative extends User implements InstitutionRepresenta
     public boolean addFeedback(String text) throws NoRightsException {
         Date date = new Date();
         Feedback feedback = new Feedback(date, this, institution, text);
-        return institution.addFeedback(feedback);
+        return institution.saveFeedback(feedback);
     }
 
     @Override
     public boolean addFeedbackTo(String text, User userTo) throws NoRightsException {
         Date date = new Date();
         Feedback feedback = new Feedback(date, this, institution, text, userTo);
-        return institution.addFeedback(feedback);
+        return institution.saveFeedback(feedback);
     }
 }

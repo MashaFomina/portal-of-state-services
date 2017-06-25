@@ -115,7 +115,7 @@ public class EducationalInstitution extends Institution {
     }
     
     @Override
-    public boolean addFeedback(Feedback feedback) throws NoRightsException {
+    public boolean saveFeedback(Feedback feedback) throws NoRightsException {
         if (!feedback.getInstitution().equals(this)) {
             throw new NoRightsException("You have no ability to add feedback of other institution to this institution!");
         }

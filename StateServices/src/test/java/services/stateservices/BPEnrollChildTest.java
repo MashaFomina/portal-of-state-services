@@ -38,8 +38,8 @@ public class BPEnrollChildTest extends TestCase {
         
         admin = repository.getAdministrator("admin");
         admin.signIn("admin");
-        institution1 = admin.addEducationalInstitution("school № 1", "Saint-Petersburg", "Kirovskyi", "88127777777", "88127777777", "pr. Veteranov h. 69");
-        institution2 = admin.addEducationalInstitution("school № 2", "Saint-Petersburg", "Kirovskyi", "88127777779", "88127777779", "pr. Veteranov h. 79");
+        institution1 = repository.getEducationalInstitution(1);
+        institution2 = repository.getEducationalInstitution(2);
         
         educationalRepresentative = repository.getEducationalRepresentative("edur");
         educationalRepresentative.signIn("pass");

@@ -13,6 +13,7 @@ public class Ticket {
     private Date date;
     private boolean visited = false;
     private String summary = "";
+    private boolean updated = false;
     
     public Ticket(Doctor doctor, Date date) {
         this.doctor = doctor;
@@ -36,13 +37,23 @@ public class Ticket {
         this.summary = summary;
     }
     
+    public void setUser(Citizen user) { this.user = user; }
     public void setId(int id) { this.id = id; }
     public int getId() { return id; }
+    
+    public boolean isUpdated() {
+        return updated;
+    }
+    
+    public void resetUpdated() {
+        updated = false;
+    }
     
     // Returns false if ticket already busy
     public boolean acceptTicket(Citizen user) {
         if (this.user == null) {
             this.user = user;
+            updated = true;
         }
         else {
             return false;
@@ -55,6 +66,7 @@ public class Ticket {
         if (this.user == null) {
             this.user = user;
             this.child = child;
+            updated = true;
         }
         else {
             return false;
@@ -65,11 +77,13 @@ public class Ticket {
     public void refuseTicket() {
         this.user = null;
         this.child = null;
+        updated = true;
     }
     
     public void setVisited(boolean visited, String summary) {
         this.visited = visited;
         this.summary = summary;
+        updated = true;
     }
     
     public Citizen getUser() {

@@ -19,6 +19,7 @@ import services.stateservices.errors.NoRightsException;
 import services.stateservices.institutions.MedicalInstitution;
 import services.stateservices.storage.Gateway;
 import services.stateservices.storage.Mapper;
+import services.stateservices.storage.StorageRepository;
 import services.stateservices.storage.entities.*;
 import services.stateservices.storage.user.UserMapper;
 import services.stateservices.user.Citizen;
@@ -27,15 +28,15 @@ import services.stateservices.user.User;
 
 public class MedicalInstitutionMapper extends InstitutionMapper implements Mapper<MedicalInstitution> {
     private static Set<MedicalInstitution> medicalInstitutions = new HashSet<>();
-    private static UserMapper userMapper;
+    private static StorageRepository repository = null;
     private static TicketMapper ticketMapper;
     private static FeedbackMapper feedbackMapper;
 
     public MedicalInstitutionMapper() throws IOException, SQLException {
         if (connection == null)
             connection = Gateway.getInstance().getDataSource().getConnection();
-        if (userMapper == null)
-            userMapper = new UserMapper(null, this);
+        if (repository == null)
+            repository = StorageRepository.getInstance();
         if (ticketMapper == null)
             ticketMapper = new TicketMapper();
         if (feedbackMapper == null)
@@ -52,8 +53,11 @@ public class MedicalInstitutionMapper extends InstitutionMapper implements Mappe
         selectStatement.setInt(3, getInstitutionType());
         ResultSet rs = selectStatement.executeQuery();
 
+        MedicalInstitution institution;
         while (rs.next()) {
-            all.add(findByID(rs.getInt("id")));
+            institution = findByID(rs.getInt("id"));
+            if (institution != null)
+                all.add(institution);
         }
 
         selectStatement.close();
@@ -90,13 +94,21 @@ public class MedicalInstitutionMapper extends InstitutionMapper implements Mappe
         List<Ticket> tickets = ticketMapper.findAllForInstitution(id);
         for (Ticket it : tickets) {
             try {
-                newMedicalInstitution.addTicket(it);
+                int userId = ticketMapper.getUserId(it.getId());
+                if (userId > 0 && it.getUser() == null) {
+                   Citizen citizen = repository.getCitizen(userId);
+                   if (it.getChild() != null) it.getChild().setParent(citizen);
+                }
+                
+                if (userId < 1 || (userId > 0 && it.getUser() != null)) {
+                    newMedicalInstitution.addTicket(it);
+                }
             }   catch (NoRightsException ex) {
                 Logger.getLogger(MedicalInstitutionMapper.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
         
-        List<Doctor> doctors = userMapper.findAllDoctors(id);
+        List<Doctor> doctors = repository.findAllDoctors(id);
         for (Doctor it : doctors) {
             try {
                 newMedicalInstitution.addDoctor(it);
@@ -107,11 +119,7 @@ public class MedicalInstitutionMapper extends InstitutionMapper implements Mappe
         
         List<Feedback> feedbacks = feedbackMapper.findAllForInstitution(id);
         for (Feedback it : feedbacks) {
-            try {
-                newMedicalInstitution.addFeedback(it);
-            }   catch (NoRightsException ex) {
-                Logger.getLogger(MedicalInstitutionMapper.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            newMedicalInstitution.addFeedback(it);
         }
         
         return newMedicalInstitution;
@@ -125,8 +133,11 @@ public class MedicalInstitutionMapper extends InstitutionMapper implements Mappe
         Statement selectStatement = connection.createStatement();
         ResultSet rs = selectStatement.executeQuery(selectSQL);
 
+        MedicalInstitution institution;
         while (rs.next()) {
-            all.add(findByID(rs.getInt("id")));
+            institution = findByID(rs.getInt("id"));
+            if (institution != null)
+                all.add(institution);
         }
 
         selectStatement.close();
@@ -152,13 +163,12 @@ public class MedicalInstitutionMapper extends InstitutionMapper implements Mappe
         }
         
         for (Doctor it : item.getDoctors()) {
-            userMapper.update(it);
+            repository.updateUser(it);
         }
     }
 
     @Override
     public void closeConnection() throws SQLException {
-        userMapper.closeConnection();
         ticketMapper.closeConnection();
         feedbackMapper.closeConnection();
         connection.close();
@@ -166,7 +176,6 @@ public class MedicalInstitutionMapper extends InstitutionMapper implements Mappe
 
     @Override
     public void clear() {
-        userMapper.clear();
         ticketMapper.clear();
         feedbackMapper.clear();
         medicalInstitutions.clear();
@@ -176,7 +185,6 @@ public class MedicalInstitutionMapper extends InstitutionMapper implements Mappe
 
     @Override
     public void update() throws SQLException {
-        userMapper.update();
         ticketMapper.update();
         feedbackMapper.update();
         for (MedicalInstitution it : medicalInstitutions)

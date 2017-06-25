@@ -165,14 +165,14 @@ public abstract class User implements UserInterface {
     public boolean addFeedback(Institution institution, String text) throws NoRightsException {
         Date date = new Date();
         Feedback feedback = new Feedback(date, this, institution, text);
-        return institution.addFeedback(feedback);
+        return institution.saveFeedback(feedback);
     }
 
     @Override
     public boolean addFeedbackTo(Institution institution, String text, User userTo) throws NoRightsException {
         Date date = new Date();
         Feedback feedback = new Feedback(date, this, institution, text, userTo);
-        return institution.addFeedback(feedback);
+        return institution.saveFeedback(feedback);
     }
  
     @Override

@@ -38,7 +38,7 @@ public class BPChildDoctorVisitTest extends TestCase {
         
         admin = repository.getAdministrator("admin");
         admin.signIn("admin");
-        institution = admin.addMedicalInstitution("hospital № 1", "Saint-Petersburg", "Kirovskyi", "88127777777", "88127777777", "pr. Veteranov h. 69");
+        institution = repository.getMedicalInstitution(3);
         
         representative = repository.getMedicalRepresentative("medr");
         representative.signIn("pass");

@@ -25,27 +25,28 @@ public class TicketMapper implements Mapper<Ticket> {
 
     private static Set<Ticket> tickets = new HashSet<>();
     private static Connection connection;
-    //private static MedicalInstitutionMapper medicalInstitutionMapper;
-    //private static UserMapper userMapper;
     private static ChildMapper childMapper;
+    private static Map<Integer, Integer> userIds = new HashMap<>();
+    private static Map<Integer, Integer> institutionIds = new HashMap<>();
     private static StorageRepository repository = null;
 
     public TicketMapper() throws IOException, SQLException {
-        if (connection == null) {System.out.println("Wow111!");
-            connection = Gateway.getInstance().getDataSource().getConnection();}
-        if (repository == null) {System.out.println("Wow!");
+        if (connection == null) 
+            connection = Gateway.getInstance().getDataSource().getConnection();
+        if (childMapper == null)
+            childMapper = new ChildMapper();
+        if (repository == null)
             repository = StorageRepository.getInstance();
-            if (repository == null) {System.out.println("Wow999!");}
-        }
-        System.out.println("Here!");
-        /*if (medicalInstitutionMapper == null)
-            medicalInstitutionMapper = new MedicalInstitutionMapper();
-        if (userMapper == null)
-            userMapper = new UserMapper(null, medicalInstitutionMapper);*/
-        if (childMapper == null) {System.out.println("Wow10000!");
-            childMapper = new ChildMapper();}
     }
 
+    public Integer getUserId(int eduRequestId) {
+        return userIds.get(eduRequestId);
+    }
+    
+    public Integer getInstitutionId(int eduRequestId) {
+        return institutionIds.get(eduRequestId);
+    }
+    
     public List<Ticket> getForInstitution(int institution) throws SQLException {
         List<Ticket> all = new ArrayList<>();
 
@@ -91,8 +92,11 @@ public class TicketMapper implements Mapper<Ticket> {
         selectStatement.setDate(2, java.sql.Date.valueOf(monthAgo));
         ResultSet rs = selectStatement.executeQuery();
 
+        Ticket ticket;
         while (rs.next()) {
-            all.add(findByID(rs.getInt("id")));
+            ticket = findByID(rs.getInt("id"));
+            if (ticket != null)
+                all.add(ticket);
         }
 
         selectStatement.close();
@@ -108,8 +112,11 @@ public class TicketMapper implements Mapper<Ticket> {
         selectStatement.setInt(1, user);
         ResultSet rs = selectStatement.executeQuery();
 
+        Ticket ticket;
         while (rs.next()) {
-            all.add(findByID(rs.getInt("id")));
+            ticket = findByID(rs.getInt("id"));
+            if (ticket != null)
+                all.add(ticket);
         }
 
         selectStatement.close();
@@ -129,8 +136,11 @@ public class TicketMapper implements Mapper<Ticket> {
         selectStatement.setDate(2, java.sql.Date.valueOf(monthAgo));
         ResultSet rs = selectStatement.executeQuery();
 
+        Ticket ticket;
         while (rs.next()) {
-            all.add(findByID(rs.getInt("id")));
+            ticket = findByID(rs.getInt("id"));
+            if (ticket != null)
+                all.add(ticket);
         }
 
         selectStatement.close();
@@ -139,6 +149,7 @@ public class TicketMapper implements Mapper<Ticket> {
     }
         
     @Override
+    // In other mapper we must set institution and user
     public Ticket findByID(int id) throws SQLException {
         for (Ticket it : tickets)
             if (it.getId() == id) return it;
@@ -155,7 +166,8 @@ public class TicketMapper implements Mapper<Ticket> {
         int childId = rs.getInt("child"); 
         int institutionId = rs.getInt("institution_id");
         int doctorId = rs.getInt("doctor");
-        Date ticketDate = rs.getDate("ticket_date");
+        Timestamp timestamp = rs.getTimestamp("ticket_date");
+        Date ticketDate = timestamp != null ? new Date(timestamp.getTime()) : null;
         int visited = rs.getInt("visited");
         String summary = rs.getString("summary");
         
@@ -163,19 +175,18 @@ public class TicketMapper implements Mapper<Ticket> {
 
         Ticket newTicket = null;
         User userDoctor = repository.getUser(doctorId);
-        MedicalInstitution institution = repository.getMedicalInstitution(institutionId);
-        if (userDoctor != null && userDoctor.isDoctor() && institution != null) {
+        // To avoid recursion we must set institution and user in other mappers
+        if (userDoctor != null && userDoctor.isDoctor()) {
             Doctor doctor = (Doctor) userDoctor;
             if (userId < 0) {
                 newTicket = new Ticket(doctor, ticketDate);
             }
             else {
-                User user = repository.getUser(userId);
                 Child child = childMapper.findByID(childId);
-                if (user != null && user.isCitizen()) {
-                    Citizen citizen = (Citizen) user;
-                    newTicket = (childId < 0) ? new Ticket(doctor, ticketDate, (visited == 1), citizen, summary) : ((child != null && citizen.getChilds().containsKey(child.getBirthCertificate())) ? new Ticket(doctor, ticketDate, (visited == 1), citizen, child, summary): null);
-                }
+                Citizen citizen = null;
+                userIds.put(tid, userId);
+                institutionIds.put(tid, institutionId);
+                newTicket = (childId < 1) ? new Ticket(doctor, ticketDate, (visited == 1), citizen, summary) : ((child != null) ? new Ticket(doctor, ticketDate, (visited == 1), citizen, child, summary): null);
             }   
         }
         
@@ -195,8 +206,11 @@ public class TicketMapper implements Mapper<Ticket> {
         Statement selectStatement = connection.createStatement();
         ResultSet rs = selectStatement.executeQuery(selectSQL);
 
+        Ticket ticket;
         while (rs.next()) {
-            all.add(findByID(rs.getInt("id")));
+            ticket = findByID(rs.getInt("id"));
+            if (ticket != null)
+                all.add(ticket);
         }
 
         selectStatement.close();
@@ -216,17 +230,55 @@ public class TicketMapper implements Mapper<Ticket> {
     @Override
     public void update(Ticket item) throws SQLException {
         if (tickets.contains(item)) {
-            // ticket object is immutable, don't need to update
+            if (item.isUpdated()) {
+                String updateSQL = "UPDATE tickets SET user = ?, child = ?, visited = ?, summary = ? WHERE id = ?;";
+                PreparedStatement updateStatement = connection.prepareStatement(updateSQL);
+                Citizen citizen = item.getUser();
+                Child child = item.getChild();
+                
+                if (citizen == null) {
+                    updateStatement.setNull(1, java.sql.Types.INTEGER);
+                }
+                else {
+                    updateStatement.setInt(1, citizen.getId());
+                }
+                
+                if (child == null) {
+                    updateStatement.setNull(2, java.sql.Types.INTEGER);
+                }
+                else {
+                    updateStatement.setInt(2, child.getId());
+                }
+                
+                updateStatement.setInt(3, item.isVisited() ? 1 : 0);
+                updateStatement.setString(4, item.getSummary());
+                updateStatement.setInt(5, item.getId());
+                updateStatement.execute();
+                item.resetUpdated();
+            }
         } else {
             String insertSQL = "INSERT INTO tickets (user, child, institution_id, doctor, ticket_date, visited, summary) VALUES (?, ?, ?, ?, ?, ?, ?);";
             PreparedStatement insertStatement = connection.prepareStatement(insertSQL, Statement.RETURN_GENERATED_KEYS);
             Citizen citizen = item.getUser();
             Child child = item.getChild();
-            insertStatement.setInt(1, (citizen != null) ? citizen.getId() : 0);
-            insertStatement.setInt(2, (child != null) ? child.getId() : 0);
+            
+            if (citizen == null) {
+                insertStatement.setNull(1, java.sql.Types.INTEGER);
+            }
+            else {
+                insertStatement.setInt(1, citizen.getId());
+            }
+            
+            if (child == null) {
+                insertStatement.setNull(2, java.sql.Types.INTEGER);
+            }
+            else {
+                insertStatement.setInt(2, child.getId() );
+            }
+            
             insertStatement.setInt(3, item.getInstitution().getId());
             insertStatement.setInt(4, item.getDoctor().getId());
-            insertStatement.setDate(5, new java.sql.Date(item.getDate().getTime()));
+            insertStatement.setTimestamp(5, new Timestamp(item.getDate().getTime()));
             insertStatement.setInt(6, item.isVisited() ? 1 : 0);
             insertStatement.setString(7, item.getSummary());
             insertStatement.execute();

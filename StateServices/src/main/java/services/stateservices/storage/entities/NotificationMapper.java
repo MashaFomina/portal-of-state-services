@@ -20,7 +20,7 @@ public class NotificationMapper implements Mapper<Notification> {
             connection = Gateway.getInstance().getDataSource().getConnection();
     }
 
-    public List<Notification> findForUser(int user) throws SQLException {
+    public List<Notification> getForUser(int user) throws SQLException {
         List<Notification> all = new ArrayList<>();
 
         for (Notification it : notifications) {
@@ -39,8 +39,11 @@ public class NotificationMapper implements Mapper<Notification> {
         selectStatement.setInt(1, user);
         ResultSet rs = selectStatement.executeQuery();
 
+        Notification notification;
         while (rs.next()) {
-            all.add(findByID(rs.getInt("id")));
+            notification = findByID(rs.getInt("id"));
+            if (notification != null)
+                all.add(notification);
         }
 
         selectStatement.close();
@@ -62,7 +65,8 @@ public class NotificationMapper implements Mapper<Notification> {
 
         int nid = rs.getInt("id");
         String notification = rs.getString("notification");
-        Date date = rs.getDate("created");
+        Timestamp timestamp = rs.getTimestamp("created");
+        Date date = timestamp != null ? new Date(timestamp.getTime()) : null;
         
         selectStatement.close();
 
@@ -79,8 +83,11 @@ public class NotificationMapper implements Mapper<Notification> {
         Statement selectStatement = connection.createStatement();
         ResultSet rs = selectStatement.executeQuery(selectSQL);
 
+        Notification notification;
         while (rs.next()) {
-            all.add(findByID(rs.getInt("id")));
+            notification = findByID(rs.getInt("id"));
+            if (notification != null)
+                all.add(notification);
         }
 
         selectStatement.close();
@@ -97,7 +104,7 @@ public class NotificationMapper implements Mapper<Notification> {
             PreparedStatement insertStatement = connection.prepareStatement(insertSQL, Statement.RETURN_GENERATED_KEYS);
             insertStatement.setInt(1, item.getOwner().getId());
             insertStatement.setString(2, item.getNotification());
-            insertStatement.setDate(3, new java.sql.Date(item.getDate().getTime()));
+            insertStatement.setTimestamp(3, new Timestamp(item.getDate().getTime()));
             insertStatement.execute();
             ResultSet rs = insertStatement.getGeneratedKeys();
             if (rs.next()) {

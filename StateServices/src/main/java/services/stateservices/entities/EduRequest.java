@@ -39,8 +39,9 @@ public class EduRequest {
     private Date creationDate;
     private Date appointment;
     private int classNumber;
+    private boolean updated = false;
     
-    public EduRequest(Status status, Child child, Citizen parent,EducationalInstitution institution, Date creationDate, Date appointment, int classNumber) {
+    public EduRequest(Status status, Child child, Citizen parent, EducationalInstitution institution, Date creationDate, Date appointment, int classNumber) {
         if (status == null) {
             this.status = Status.OPENED;
         }
@@ -64,16 +65,28 @@ public class EduRequest {
         this.appointment = request.appointment;
         this.classNumber = request.classNumber;
     }
+ 
+    public boolean isUpdated() {
+        return updated;
+    }
     
+    public void resetUpdated() {
+        updated = false;
+    }
+    
+    public void setParent(Citizen parent) { this.parent = parent; }
+    public void setInstitution(EducationalInstitution institution) { this.institution = institution; }
     public void setId(int id) { this.id = id; }
     public int getId() { return id; }
     
     public void changeStatus(Status status) {
         this.status = status;
+        updated = true;
     }
     
     public void makeAppointment(Date appointment) {
         this.appointment = appointment;
+        updated = true;
     }
     
     public EducationalInstitution getInstitution() {

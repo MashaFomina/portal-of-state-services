@@ -5,6 +5,8 @@ import java.util.Date;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 import services.stateservices.user.User;
 import services.stateservices.user.EducationalRepresentative;
@@ -12,6 +14,7 @@ import services.stateservices.user.MedicalRepresentative;
 import services.stateservices.user.Doctor;
 import services.stateservices.user.Administrator;
 import services.stateservices.user.Citizen;
+import services.stateservices.entities.*;
 import services.stateservices.institutions.*;
 import services.stateservices.storage.user.*;
 import services.stateservices.storage.entities.*;
@@ -28,116 +31,45 @@ public class StorageRepository {
 
     public  static StorageRepository getInstance() {
         if (instance == null) {
-            System.out.println("Wow0000!");
             instance = new StorageRepository();
+            try {
+                if (educationalInstitutionMapper == null) educationalInstitutionMapper = new EducationalInstitutionMapper();
+                if (medicalInstitutionMapper == null) medicalInstitutionMapper = new MedicalInstitutionMapper();
+                if (userMapper == null) userMapper = new UserMapper(educationalInstitutionMapper, medicalInstitutionMapper);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
-        try {
-            if (educationalInstitutionMapper == null) {System.out.println("educationalInstitutionMapper");educationalInstitutionMapper = new EducationalInstitutionMapper();}
-            if (medicalInstitutionMapper == null) {System.out.println("medicalInstitutionMapper");medicalInstitutionMapper = new MedicalInstitutionMapper();}
-            if (userMapper == null) {System.out.println("userMapper");userMapper = new UserMapper(educationalInstitutionMapper, medicalInstitutionMapper);}
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        System.out.println("instance!");
         return instance;
     }
     
-    /*public boolean addEducationalRepresentative(String login, String password, String fullName, String email, EducationalInstitution institution, boolean approved) {
-        if (users.containsKey(login)) return false;
-
-        EducationalRepresentative newUser = new EducationalRepresentative(login, password, fullName, email, institution, approved);
-        synchronized (this) {
-            users.put(login, newUser);
-            educationalRepresentatives.put(login, newUser);
-        }
-        return true;
-    }
-
-    public boolean addMedicalRepresentative(String login, String password, String fullName, String email, MedicalInstitution institution, boolean approved) {
-        if (users.containsKey(login)) return false;
-
-        MedicalRepresentative newUser = new MedicalRepresentative(login, password, fullName, email, institution, approved);
-        synchronized (this) {
-            users.put(login, newUser);
-            medicalRepresentatives.put(login, newUser);
-        }
-        return true;
-    }*/
-    
-    public boolean addDoctor(String login, String password, String fullName, String email, MedicalInstitution institution, String position, String summary, boolean approved) {
-        /*if (users.containsKey(login)) return false;
-
-        Doctor newUser = new Doctor(login, password, fullName, email, institution,position, summary, approved);
-        synchronized (this) {
-            users.put(login, newUser);
-            doctors.put(login, newUser);
-        }*/
-        return true;
-    }
-    
-    /*public boolean addAdministrator(String login, String password, String fullName, String email) {
-        if (users.containsKey(login)) return false;
-
-        Administrator newUser = new Administrator(login, password, fullName, email);
-        synchronized (this) {
-            users.put(login, newUser);
-            administrators.put(login, newUser);
-        }
-        return true;
-    }
-    
-    public boolean addCitizen(String login, String password, String fullName, String email, String policy, String passport, Date birthDate) throws AlreadyExistsException {
+    public boolean addUser(User user) throws AlreadyExistsException {
         try {
-            if (userMapper.findByLogin(login) != null) throw new AlreadyExistsException("User with login " + login + " already exists");
+            if (userMapper.findByLogin(user.getLogin()) != null) throw new AlreadyExistsException("User with login " + user.getLogin() + " already exists");
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
         }
-
-        Citizen newUser = new Citizen(login, password, fullName, email, policy, passport, birthDate);
+  
         try {
-            citizenMapper.addCitizen(newUser);
+            userMapper.update(user);
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
         }
         return true;
     }
-        public Project addProject(String name, Manager manager) {
-        Project project = new Project(name, manager);
-        try {
-            projectMapper.update(project);
-            return project;
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    public Project getProject(String name) {
-        try {
-            return projectMapper.findByName(name);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (EndBeforeStartException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    public Project getProject(int id) {
-        try {
-            return projectMapper.findByID(id);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (EndBeforeStartException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }*/
     
+    public void updateEducationalInstitution(EducationalInstitution institution) throws SQLException {
+        educationalInstitutionMapper.update(institution);
+    }
+ 
+    public void updateMedicalInstitution(MedicalInstitution institution) throws SQLException {
+        medicalInstitutionMapper.update(institution);
+    }
+        
     public EducationalInstitution addEducationalInstitution(String title, String city, String district, String telephone, String fax, String address, Map<Integer, Integer> seats, Map<Integer, Integer> busySeats) {
         try {
             EducationalInstitution institution = new EducationalInstitution(title, city, district, telephone, fax, address, seats, busySeats);
@@ -161,16 +93,22 @@ public class StorageRepository {
     }
         
     public MedicalInstitution addMedicalInstitution(String title, String city, String district, String telephone, String fax, String address) {
-        /*if (medicalInstitutions.containsKey(telephone)) return medicalInstitutions.get(telephone);
-        MedicalInstitution institution = new MedicalInstitution(title, city, district, telephone, fax, address);
-        synchronized (this) {
-            medicalInstitutions.put(telephone, institution);
+        try {
+            MedicalInstitution institution = new MedicalInstitution(title, city, district, telephone, fax, address);
+            medicalInstitutionMapper.update(institution);
+            return institution;
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-        return institution;*/
-        return new MedicalInstitution(title, city, district, telephone, fax, address);
+        return null;
     }
     
     public EducationalInstitution getEducationalInstitution(int id) {
+        try {
+            return educationalInstitutionMapper.findByID(id);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         return null;
     }
         
@@ -237,6 +175,24 @@ public class StorageRepository {
         return null;
     }
     
+    public List<Doctor> findAllDoctors(int institutionId) {
+        try {
+            return userMapper.findAllDoctors(institutionId);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return new ArrayList<>();
+        
+    }
+    
+    public void updateUser(User user) {
+        try {
+            userMapper.update(user);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }     
+    }
+        
     public void removeDoctor(String login) {
         /*doctors.remove(login);
         users.remove(login);*/
@@ -265,6 +221,18 @@ public class StorageRepository {
         }
         return null;
     }  
+    
+    public Citizen getCitizen(int id) {
+        try {
+            User user = userMapper.findByID(id);
+            if (user != null && user.isCitizen())  {
+                return (Citizen) user;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }  
 
     public boolean authenticateUser(String login, String password) {
         User user = getUser(login);
@@ -279,6 +247,10 @@ public class StorageRepository {
         educationalInstitutionMapper.clear();
         medicalInstitutionMapper.clear();
         userMapper.clear();
+        educationalInstitutionMapper = null;
+        medicalInstitutionMapper = null;
+        userMapper = null;
+        instance = null;
     }
 
     public void update() throws SQLException {
@@ -295,5 +267,9 @@ public class StorageRepository {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+    
+    public static String encryptPassword(String password) {
+        return userMapper.encryptPassword(password);
     }
 }

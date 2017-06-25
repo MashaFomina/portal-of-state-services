@@ -31,6 +31,14 @@ public class Doctor extends User implements InstitutionRepresentative {
         this.approved = user.approved;
     }
     
+    public String getPosition() {
+        return position;
+    }
+    
+    public String getSummary() {
+        return summary;
+    }
+    
     public void addTickets(Date start, Date end, int intervalMinutes) throws InvalidTicketsDatesException, NoRightsException {
         Date currentDate = new Date();
         if (end.before(start) || start.before(currentDate)) {
@@ -103,13 +111,13 @@ public class Doctor extends User implements InstitutionRepresentative {
     public boolean addFeedback(String text) throws NoRightsException {
         Date date = new Date();
         Feedback feedback = new Feedback(date, this, institution, text);
-        return institution.addFeedback(feedback);
+        return institution.saveFeedback(feedback);
     }
 
     @Override
     public boolean addFeedbackTo(String text, User userTo) throws NoRightsException {
         Date date = new Date();
         Feedback feedback = new Feedback(date, this, institution, text, userTo);
-        return institution.addFeedback(feedback);
+        return institution.saveFeedback(feedback);
     }
 }

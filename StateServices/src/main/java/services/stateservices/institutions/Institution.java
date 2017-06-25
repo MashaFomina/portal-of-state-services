@@ -84,5 +84,9 @@ public abstract class Institution {
         return feedbacks;
     }
     
-    public abstract boolean addFeedback(Feedback feedback) throws NoRightsException;
+    public abstract boolean saveFeedback(Feedback feedback) throws NoRightsException;
+    
+    public void addFeedback(Feedback feedback) {
+        feedbacks.add(feedback);
+    }
 }

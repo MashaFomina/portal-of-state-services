@@ -9,6 +9,7 @@ import services.stateservices.entities.Feedback;
 import services.stateservices.institutions.*;
 import services.stateservices.storage.Gateway;
 import services.stateservices.storage.Mapper;
+import services.stateservices.storage.StorageRepository;
 import services.stateservices.storage.user.UserMapper;
 import services.stateservices.storage.institutions.*;
 import services.stateservices.user.User;
@@ -17,19 +18,13 @@ public class FeedbackMapper implements Mapper<Feedback> {
 
     private static Set<Feedback> feedbacks = new HashSet<>();
     private static Connection connection;
-    private static EducationalInstitutionMapper educationalInstitutionMapper;
-    private static MedicalInstitutionMapper medicalInstitutionMapper;
-    private static UserMapper userMapper;
+    private static StorageRepository repository = null;
 
     public FeedbackMapper() throws IOException, SQLException {
         if (connection == null)
             connection = Gateway.getInstance().getDataSource().getConnection();
-        if (educationalInstitutionMapper == null)
-            educationalInstitutionMapper = new EducationalInstitutionMapper();
-        if (medicalInstitutionMapper == null)
-            medicalInstitutionMapper = new MedicalInstitutionMapper();
-        if (userMapper == null)
-            userMapper = new UserMapper(educationalInstitutionMapper, medicalInstitutionMapper);
+        if (repository == null)
+            repository = StorageRepository.getInstance();
     }
 
     // Is used for getting from cache
@@ -52,8 +47,11 @@ public class FeedbackMapper implements Mapper<Feedback> {
         selectStatement.setInt(1, institution);
         ResultSet rs = selectStatement.executeQuery();
 
+        Feedback feedback;
         while (rs.next()) {
-            all.add(findByID(rs.getInt("id")));
+            feedback = findByID(rs.getInt("id"));
+            if (feedback != null)
+                all.add(feedback);
         }
 
         selectStatement.close();
@@ -76,7 +74,8 @@ public class FeedbackMapper implements Mapper<Feedback> {
         int fid = rs.getInt("f.id");
         int userId = rs.getInt("f.user");
         String text = rs.getString("f.feedback_text");
-        java.sql.Date date = rs.getDate("f.created datetime");
+        Timestamp timestamp = rs.getTimestamp("f.created");
+        Date date = timestamp != null ? new Date(timestamp.getTime()) : null;
         int institutionId = rs.getInt("f.institution_id");
         int toUserId = rs.getInt("f.to_user");
         int isEdu = rs.getInt("i.is_edu");
@@ -84,9 +83,9 @@ public class FeedbackMapper implements Mapper<Feedback> {
         selectStatement.close();
 
         Feedback newFeedback = null;
-        User user = userMapper.findByID(userId);
-        Institution institution = (isEdu == 1) ? educationalInstitutionMapper.findByID(institutionId) : medicalInstitutionMapper.findByID(institutionId);
-        User toUser = (toUserId > 0) ? userMapper.findByID(toUserId) : null;
+        User user = repository.getUser(userId);
+        Institution institution = (isEdu == 1) ? repository.getEducationalInstitution(institutionId) : repository.getMedicalInstitution(institutionId);
+        User toUser = (toUserId > 0) ? repository.getUser(toUserId) : null;
         if (user != null && institution != null) {
             newFeedback = (toUserId < 1 || toUser == null) ? new Feedback(date, user, institution, text) : new Feedback(date, user, institution, text, toUser);
             newFeedback.setId(fid); 
@@ -104,8 +103,11 @@ public class FeedbackMapper implements Mapper<Feedback> {
         Statement selectStatement = connection.createStatement();
         ResultSet rs = selectStatement.executeQuery(selectSQL);
 
+        Feedback feedback;
         while (rs.next()) {
-            all.add(findByID(rs.getInt("id")));
+            feedback = findByID(rs.getInt("id"));
+            if (feedback != null)
+                all.add(feedback);
         }
 
         selectStatement.close();
@@ -123,7 +125,7 @@ public class FeedbackMapper implements Mapper<Feedback> {
             PreparedStatement insertStatement = connection.prepareStatement(insertSQL, Statement.RETURN_GENERATED_KEYS);
             insertStatement.setInt(1, item.getUser().getId());
             insertStatement.setString(2, item.getText());
-            insertStatement.setDate(3, new java.sql.Date(item.getDate().getTime()));
+            insertStatement.setTimestamp(3, new Timestamp(item.getDate().getTime()));
             insertStatement.setInt(4, item.getInstitution().getId());
             if (toUser != null)
                 insertStatement.setInt(1, toUser.getId());
@@ -140,17 +142,11 @@ public class FeedbackMapper implements Mapper<Feedback> {
 
     @Override
     public void closeConnection() throws SQLException {
-        educationalInstitutionMapper.closeConnection();
-        medicalInstitutionMapper.closeConnection();
-        userMapper.closeConnection();
         connection.close();
     }
 
     @Override
     public void clear() {
-        educationalInstitutionMapper.clear();
-        medicalInstitutionMapper.clear();
-        userMapper.clear();
         feedbacks.clear();
     }
 

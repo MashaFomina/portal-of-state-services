@@ -39,8 +39,11 @@ public class ChildMapper implements Mapper<Child> {
         selectStatement.setInt(1, user);
         ResultSet rs = selectStatement.executeQuery();
 
+        Child child;
         while (rs.next()) {
-            all.add(findByID(rs.getInt("id")));
+            child = findByID(rs.getInt("id"));
+            if (child != null)
+                all.add(child);
         }
 
         selectStatement.close();
@@ -63,7 +66,8 @@ public class ChildMapper implements Mapper<Child> {
         int cid = rs.getInt("id");
         String fullName = rs.getString("full_name");
         String birthCertificate = rs.getString("birth_certificate");
-        Date birthDate = rs.getDate("birth_date");
+        Timestamp timestamp = rs.getTimestamp("birth_date");
+        Date birthDate = timestamp != null ? new Date(timestamp.getTime()) : null;
 
         selectStatement.close();
         
@@ -80,8 +84,11 @@ public class ChildMapper implements Mapper<Child> {
         Statement selectStatement = connection.createStatement();
         ResultSet rs = selectStatement.executeQuery(selectSQL);
 
+        Child child;
         while (rs.next()) {
-            all.add(findByID(rs.getInt("id")));
+            child = findByID(rs.getInt("id"));
+            if (child != null)
+                all.add(child);
         }
 
         selectStatement.close();
@@ -99,7 +106,7 @@ public class ChildMapper implements Mapper<Child> {
             insertStatement.setInt(1, item.getParent().getId());
             insertStatement.setString(2, item.getFullName());
             insertStatement.setString(3, item.getBirthCertificate());
-            insertStatement.setDate(4, new java.sql.Date(item.getBirthDate().getTime()));
+            insertStatement.setTimestamp(4, new Timestamp(item.getBirthDate().getTime()));
             insertStatement.execute();
             ResultSet rs = insertStatement.getGeneratedKeys();
             if (rs.next()) {

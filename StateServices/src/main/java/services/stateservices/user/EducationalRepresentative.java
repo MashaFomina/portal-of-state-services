@@ -117,13 +117,13 @@ public class EducationalRepresentative extends User implements InstitutionRepres
     public boolean addFeedback(String text) throws NoRightsException {
         Date date = new Date();
         Feedback feedback = new Feedback(date, this, institution, text);
-        return institution.addFeedback(feedback);
+        return institution.saveFeedback(feedback);
     }
 
     @Override
     public boolean addFeedbackTo(String text, User userTo) throws NoRightsException {
         Date date = new Date();
         Feedback feedback = new Feedback(date, this, institution, text, userTo);
-        return institution.addFeedback(feedback);
+        return institution.saveFeedback(feedback);
     }
 }

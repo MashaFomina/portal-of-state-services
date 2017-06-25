@@ -44,8 +44,8 @@ public class BPDoctorVisitTest extends TestCase {
         
         admin = repository.getAdministrator("admin");
         admin.signIn("admin");
-        institution1 = admin.addMedicalInstitution("hospital № 1", "Saint-Petersburg", "Kirovskyi", "88127777777", "88127777777", "pr. Veteranov h. 69");
-        institution2 = admin.addMedicalInstitution("hospital № 2", "Saint-Petersburg", "Kirovskyi", "88127777778", "88127777778", "pr. Veteranov h. 69");
+        institution1 = repository.getMedicalInstitution(3);
+        institution2 = repository.getMedicalInstitution(4);
         
         representative1 = repository.getMedicalRepresentative("medr");
         representative1.signIn("pass");
