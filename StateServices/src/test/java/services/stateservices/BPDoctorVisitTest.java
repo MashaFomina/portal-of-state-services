@@ -41,29 +41,21 @@ public class BPDoctorVisitTest extends TestCase {
     public void setUp() throws Exception {
         /// Adding institution and users to repository
         repository = StorageRepository.getInstance();
-        repository.addAdministrator("admin", "admin", "admin", "admin@mail.com");
         
-        admin = repository.getAdministrator(repository.getUser("admin"));
+        admin = repository.getAdministrator("admin");
         admin.signIn("admin");
         institution1 = admin.addMedicalInstitution("hospital № 1", "Saint-Petersburg", "Kirovskyi", "88127777777", "88127777777", "pr. Veteranov h. 69");
         institution2 = admin.addMedicalInstitution("hospital № 2", "Saint-Petersburg", "Kirovskyi", "88127777778", "88127777778", "pr. Veteranov h. 69");
         
-        repository.addMedicalRepresentative("medr", "pass", "medr", "medr@mail.com", institution1, true);
-        representative1 = repository.getMedicalRepresentative(repository.getUser("medr"));
+        representative1 = repository.getMedicalRepresentative("medr");
         representative1.signIn("pass");
-        representative1.addDoctor("doctor", "pass", "doctor", "doctor@mail.com", "therapist", "good doctor");
-        doctor1 = repository.getDoctor(repository.getUser("doctor"));
+        doctor1 = repository.getDoctor("doctor");
         
-        
-        repository.addMedicalRepresentative("medr1", "pass", "medr1", "medr1@mail.com", institution2, true);
-        representative2 = repository.getMedicalRepresentative(repository.getUser("medr1"));
+        representative2 = repository.getMedicalRepresentative("medr1");
         representative2.signIn("pass");
-        representative2.addDoctor("doctor1", "pass", "doctor1", "doctor1@mail.com", "therapist", "good doctor");
-        doctor2 = repository.getDoctor(repository.getUser("doctor1"));
+        doctor2 = repository.getDoctor("doctor1");
         
-        Date birthDate = new Date(1995, 0, 4);
-        repository.addCitizen("citizen", "pass", "citizen", "citizen@mail.com", "1234567891234567", "4050123450", birthDate);
-        citizen = repository.getCitizen(repository.getUser("citizen"));
+        citizen = repository.getCitizen("citizen");
         citizen.signIn("pass");
         
         representative1.deleteTickets(doctor1, null);

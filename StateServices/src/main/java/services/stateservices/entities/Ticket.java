@@ -6,6 +6,7 @@ import services.stateservices.user.Doctor;
 import services.stateservices.institutions.MedicalInstitution;
 
 public class Ticket {
+    private int id;
     private Citizen user = null;
     private Child child = null;
     private Doctor doctor;
@@ -34,15 +35,9 @@ public class Ticket {
         this.visited = visited;
         this.summary = summary;
     }
-        
-    public Ticket(Ticket ticket) {
-        this.user = ticket.user;
-        this.child = ticket.child;
-        this.doctor = ticket.doctor;
-        this.date = ticket.date;
-        this.visited = ticket.visited;
-        this.summary = ticket.summary;
-    }
+    
+    public void setId(int id) { this.id = id; }
+    public int getId() { return id; }
     
     // Returns false if ticket already busy
     public boolean acceptTicket(Citizen user) {

@@ -4,6 +4,7 @@ import java.util.Date;
 import services.stateservices.user.Citizen;
 
 public class Child {
+    private int id;
     private Citizen parent; 
     private String fullName;
     private String birthCertificate;
@@ -16,7 +17,16 @@ public class Child {
         this.birthDate = birthDate;
     }
 
+    public Child(int id, String fullName, String birthCertificate, Date birthDate) {
+        this.id = id;
+        this.fullName = fullName;
+        this.birthCertificate = birthCertificate;
+        this.birthDate = birthDate;
+    }
+    
+        
     public Child(Child child) {
+        this.id = child.id;
         this.parent = child.parent;
         this.fullName = child.fullName;
         this.birthCertificate = child.birthCertificate;
@@ -38,4 +48,11 @@ public class Child {
     public Date getBirthDate() {
         return birthDate;
     }
+    
+    public void setParent(Citizen parent) {
+        this.parent = parent;
+    }
+    
+    public void setId(int id) { this.id = id; }
+    public int getId() { return id; }
 }

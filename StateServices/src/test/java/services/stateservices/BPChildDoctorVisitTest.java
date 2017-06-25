@@ -35,21 +35,16 @@ public class BPChildDoctorVisitTest extends TestCase {
     public void setUp() throws Exception {
         /// Adding institution and users to repository
         repository = StorageRepository.getInstance();
-        repository.addAdministrator("admin", "admin", "admin", "admin@mail.com");
         
-        admin = repository.getAdministrator(repository.getUser("admin"));
+        admin = repository.getAdministrator("admin");
         admin.signIn("admin");
         institution = admin.addMedicalInstitution("hospital № 1", "Saint-Petersburg", "Kirovskyi", "88127777777", "88127777777", "pr. Veteranov h. 69");
         
-        repository.addMedicalRepresentative("medr", "pass", "medr", "medr@mail.com", institution, true);
-        representative = repository.getMedicalRepresentative(repository.getUser("medr"));
+        representative = repository.getMedicalRepresentative("medr");
         representative.signIn("pass");
-        representative.addDoctor("doctor", "pass", "doctor", "doctor@mail.com", "therapist", "good doctor");
-        doctor = repository.getDoctor(repository.getUser("doctor"));
+        doctor = repository.getDoctor("doctor");
         
-        Date birthDate = new Date(1995, 0, 4);
-        repository.addCitizen("citizen", "pass", "citizen", "citizen@mail.com", "1234567891234567", "4050123450", birthDate);
-        citizen = repository.getCitizen(repository.getUser("citizen"));
+        citizen = repository.getCitizen("citizen");
         citizen.signIn("pass");
         
         representative.deleteTickets(doctor, null);

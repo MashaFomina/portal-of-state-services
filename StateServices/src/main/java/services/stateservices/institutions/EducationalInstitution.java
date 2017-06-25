@@ -41,6 +41,7 @@ public class EducationalInstitution extends Institution {
             this.seats = seats;
             this.busySeats = busySeats;
         }
+        updated = true;
     }
     
     public Set<EduRequest> getEduRequests() {
@@ -79,14 +80,23 @@ public class EducationalInstitution extends Institution {
     public void setSeats(int classNumber, int seats, int busySeats) {
         this.seats.put(classNumber, seats);
         this.busySeats.put(classNumber, busySeats);
+        updated = true;
     }
     
     public void setSeats(Map<Integer, Integer> seats, Map<Integer, Integer> busySeats) {
         this.seats = seats;
         this.busySeats = busySeats;
+        updated = true;
+    }
+
+    public void addEduRequest(EduRequest request) throws NoRightsException {
+        if (!request.getInstitution().equals(this)) {
+            throw new NoRightsException("You have no ability to add educational request with other institution to this institution!");
+        }
+        requests.add(request);
     }
     
-    public boolean addEduRequest(EduRequest request) throws NoRightsException {
+    public boolean createEduRequest(EduRequest request) throws NoRightsException {
         if (!request.getInstitution().equals(this)) {
             throw new NoRightsException("You have no ability to add educational request with other institution to this institution!");
         }

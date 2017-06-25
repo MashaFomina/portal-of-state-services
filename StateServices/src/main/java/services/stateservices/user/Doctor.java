@@ -16,7 +16,7 @@ public class Doctor extends User implements InstitutionRepresentative {
     private boolean approved;
     
     public Doctor(String login, String password, String fullName, String email, MedicalInstitution institution, String position, String summary, boolean approved) {
-        super(login, password, fullName, email);
+        super(login, password, fullName, email, User.UserType.DOCTOR);
         this.position = position;
         this.summary = summary;
         this.institution = institution;

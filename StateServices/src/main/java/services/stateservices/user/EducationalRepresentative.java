@@ -17,7 +17,7 @@ public class EducationalRepresentative extends User implements InstitutionRepres
     private boolean approved;
 
     public EducationalRepresentative(String login, String password, String fullName, String email, EducationalInstitution institution, boolean approved) {
-        super(login, password, fullName, email);
+        super(login, password, fullName, email, User.UserType.EDUCATIONAL_REPRESENTATIVE);
         this.institution = institution;
         this.approved = approved;
     }

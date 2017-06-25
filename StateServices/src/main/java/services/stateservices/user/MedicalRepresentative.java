@@ -18,7 +18,7 @@ public class MedicalRepresentative extends User implements InstitutionRepresenta
     private StorageRepository repository;
     
     public MedicalRepresentative(String login, String password, String fullName, String email, MedicalInstitution institution, boolean approved) {
-        super(login, password, fullName, email);
+        super(login, password, fullName, email, User.UserType.MEDICAL_REPRESENTATIVE);
         this.institution = institution;
         this.approved = approved;
         repository = StorageRepository.getInstance();
@@ -33,7 +33,7 @@ public class MedicalRepresentative extends User implements InstitutionRepresenta
     
     public void addDoctor(String login, String password, String fullName, String email, String position, String summary) throws NoRightsException {
         repository.addDoctor(login, password, fullName, email, institution, position, summary, true);
-        Doctor doctor = repository.getDoctor(repository.getUser(login));
+        Doctor doctor = repository.getDoctor(login);
         institution.addDoctor(doctor);
     }
     

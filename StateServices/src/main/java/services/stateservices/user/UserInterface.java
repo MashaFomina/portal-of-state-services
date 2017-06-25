@@ -9,11 +9,14 @@ import services.stateservices.institutions.Institution;
 public interface UserInterface {
     User getUser();
     void setId(int id);
+    int getId();
     boolean isAuthenticated();
     boolean signIn(String password);
     void signOut();
+    void setNotifications(List<Notification> notifications);
     void addNotification(String notification);
     List<Notification> getNotifications();
     boolean addFeedback(Institution institution, String text) throws NoRightsException;
     boolean addFeedbackTo(Institution institution, String text, User userTo) throws NoRightsException;
+    User.UserType getUserType();
 }

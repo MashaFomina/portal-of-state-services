@@ -7,12 +7,14 @@ import services.stateservices.errors.NoRightsException;
 import services.stateservices.user.User;
 
 public abstract class Institution {
+    private int id;
     private String title;
     private String city;
     private String district;
     private String telephone;
     private String fax;
     private String address;
+    protected boolean updated = false;
     protected Set<Feedback> feedbacks = new HashSet<>();
     
     protected Institution(String title, String city, String district, String telephone, String fax, String address) {
@@ -40,7 +42,19 @@ public abstract class Institution {
         this.telephone = telephone;
         this.fax = fax;
         this.address = address;
+        updated = true;
     }
+    
+    public boolean isUpdated() {
+        return updated;
+    }
+    
+    public void resetUpdated() {
+        updated = false;
+    }
+    
+    public void setId(int id) { this.id = id; }
+    public int getId() { return id; }
     
     public String getTitle() {
         return title;

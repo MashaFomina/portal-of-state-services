@@ -8,7 +8,7 @@ import services.stateservices.storage.StorageRepository;
 
 public class Administrator extends User {
     public Administrator(String login, String password, String fullName, String email) {
-        super(login, password, fullName, email);
+        super(login, password, fullName, email, User.UserType.ADMINISTRATOR);
     }
     
     public Administrator(Administrator user) {

@@ -51,6 +51,10 @@ public class MedicalInstitution extends Institution {
         }
     }
     
+    public Set<Doctor> getDoctors() {
+        return doctors;
+    }
+    
     public void addTicket(Ticket ticket) throws NoRightsException {
         if (!ticket.getInstitution().equals(this)) {
             throw new NoRightsException("You have no ability to add ticket of other institution to this institution!");

@@ -35,24 +35,19 @@ public class BPEnrollChildTest extends TestCase {
     public void setUp() throws Exception {
         /// Adding institution and users to repository
         repository = StorageRepository.getInstance();
-        repository.addAdministrator("admin", "admin", "admin", "admin@mail.com");
         
-        admin = repository.getAdministrator(repository.getUser("admin"));
+        admin = repository.getAdministrator("admin");
         admin.signIn("admin");
         institution1 = admin.addEducationalInstitution("school № 1", "Saint-Petersburg", "Kirovskyi", "88127777777", "88127777777", "pr. Veteranov h. 69");
         institution2 = admin.addEducationalInstitution("school № 2", "Saint-Petersburg", "Kirovskyi", "88127777779", "88127777779", "pr. Veteranov h. 79");
         
-        repository.addEducationalRepresentative("edur", "pass", "edur", "edur@mail.com", institution1, true);
-        educationalRepresentative = repository.getEducationalRepresentative(repository.getUser("edur"));
+        educationalRepresentative = repository.getEducationalRepresentative("edur");
         educationalRepresentative.signIn("pass");
         
-        Date birthDate = new Date(1995, 0, 4);
-        repository.addCitizen("citizen", "pass", "citizen", "citizen@mail.com", "1234567891234567", "4050123450", birthDate);
-        citizen = repository.getCitizen(repository.getUser("citizen"));
+        citizen = repository.getCitizen("citizen");
         citizen.signIn("pass");
          
-        repository.addCitizen("citizen1", "pass", "citizen", "citizen@mail.com", "1234567891234567", "4050123450", birthDate);
-        otherCitizen = repository.getCitizen(repository.getUser("citizen1"));
+        otherCitizen = repository.getCitizen("citizen1");
         otherCitizen.signIn("pass");
     }
 

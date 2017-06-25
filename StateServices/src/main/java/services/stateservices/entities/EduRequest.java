@@ -6,12 +6,32 @@ import services.stateservices.user.Citizen;
 
 public class EduRequest {
     public enum Status {
-        OPENED,
-        ACCEPTED_BY_INSTITUTION,
-        ACCEPTED_BY_PARENT,
-        REFUSED,
-        CHILD_IS_ENROLLED
+        OPENED("OPENED"),
+        ACCEPTED_BY_INSTITUTION("ACCEPTED_BY_INSTITUTION"),
+        ACCEPTED_BY_PARENT("ACCEPTED_BY_PARENT"),
+        REFUSED("REFUSED"),
+        CHILD_IS_ENROLLED("CHILD_IS_ENROLLED");
+        private String text;
+        
+        Status(String text) {
+          this.text = text;
+        }
+
+        public String getText() {
+          return this.text;
+        }
+
+        public static Status fromString(String text) {
+          for (Status b : Status.values()) {
+            if (b.text.equalsIgnoreCase(text)) {
+              return b;
+            }
+          }
+          return null;
+        }
     }
+    
+    private int id;
     private Status status;
     private Child child;
     private Citizen parent;
@@ -44,6 +64,9 @@ public class EduRequest {
         this.appointment = request.appointment;
         this.classNumber = request.classNumber;
     }
+    
+    public void setId(int id) { this.id = id; }
+    public int getId() { return id; }
     
     public void changeStatus(Status status) {
         this.status = status;

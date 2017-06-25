@@ -22,7 +22,7 @@ public class Citizen extends User {
     private Map<String, Child> childs = new HashMap<>();
     
     public Citizen(String login, String password, String fullName, String email, String policy, String passport, Date birthDate) {
-        super(login, password, fullName, email);
+        super(login, password, fullName, email, User.UserType.CITIZEN);
         this.policy = policy;
         this.passport = passport;
         this.birthDate = birthDate;
@@ -43,6 +43,40 @@ public class Citizen extends User {
         return childs;
     }
     
+    public Set<Ticket> getTickets() {
+        return tickets;
+    }
+    
+    public String getPolicy() {
+        return policy;
+    }
+    
+    public String getPassport() {
+        return passport;
+    }
+    
+    public Date getBirthDate() {
+        return birthDate;
+    }
+    
+    public void addChild(Child child) {
+        if (child.getParent().equals(this)) {
+            childs.put(child.getBirthCertificate(), child);
+        }
+    }
+    
+    public void addTicket(Ticket ticket) {
+        if (ticket.getUser().equals(this)) {
+            tickets.add(ticket);
+        }
+    }
+       
+    public void addEduRequest(EduRequest request) {
+        if (request.getParent().equals(this)) {
+            requests.add(request);
+        }
+    }
+        
     public boolean createChildInfo(String fullName, String birthCertificate, Date birthDate) {
         Child child = new Child(this, fullName, birthCertificate, birthDate);
         if (!childs.containsKey(child.getBirthCertificate())) {
@@ -96,9 +130,11 @@ public class Citizen extends User {
             }
             Date creationDate = new Date();
             EduRequest request = new EduRequest(null, child, this, institution, creationDate, null, classNumber);
-            institution.addEduRequest(request);
-            requests.add(request);
-            return request;
+            boolean result = institution.createEduRequest(request);
+            if (result) {
+                requests.add(request);
+                return request;
+            }
         }
         return null;
     }
@@ -160,9 +196,5 @@ public class Citizen extends User {
         if (tickets.contains(ticket)) {
             tickets.remove(ticket);
         }
-    }
-        
-    public Set<Ticket> getTickets() {
-        return tickets;
     }
 }
