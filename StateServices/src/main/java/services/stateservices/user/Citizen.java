@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.ArrayList;
 import services.stateservices.entities.*;
 import services.stateservices.errors.NoFreeSeatsException;
 import services.stateservices.institutions.*;
@@ -17,8 +18,8 @@ public class Citizen extends User {
     private String policy;
     private String passport;
     private Date birthDate;
-    private Set<EduRequest> requests = new HashSet<>();
-    private Set<Ticket> tickets = new HashSet<>();
+    private List<EduRequest> requests = new ArrayList<>();
+    private List<Ticket> tickets = new ArrayList<>();
     private Map<String, Child> childs = new HashMap<>();
     
     public Citizen(String login, String password, String fullName, String email, String policy, String passport, Date birthDate) {
@@ -35,7 +36,7 @@ public class Citizen extends User {
         this.birthDate = user.birthDate;
     }
     
-    public Set<EduRequest> getEduRequests() {
+    public List<EduRequest> getEduRequests() {
         return requests;
     }
     
@@ -43,7 +44,7 @@ public class Citizen extends User {
         return childs;
     }
     
-    public Set<Ticket> getTickets() {
+    public List<Ticket> getTickets() {
         return tickets;
     }
     
@@ -105,6 +106,14 @@ public class Citizen extends User {
                 if (request.getChild().getBirthCertificate().equals(birthCertificate)) {
                     request.getInstitution().removeEduRequest(request);
                     i.remove();
+                }
+            }
+            Iterator<Ticket> k = tickets.iterator();
+            while (k.hasNext()) {
+                Ticket ticket = k.next(); // must be called before you can call i.remove()
+                if (ticket.getChild() != null && ticket.getChild().getBirthCertificate().equals(birthCertificate)) {
+                    ticket.getInstitution().removeTicket(ticket);
+                    k.remove();
                 }
             }
             childs.remove(birthCertificate);

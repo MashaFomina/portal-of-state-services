@@ -34,7 +34,7 @@ public class NotificationMapper implements Mapper<Notification> {
     public List<Notification> findAllForUser(int user) throws SQLException {
         List<Notification> all = new ArrayList<>();
 
-        String selectSQL = "SELECT id FROM notifications WHERE user = ?;";
+        String selectSQL = "SELECT id FROM notifications WHERE user = ? ORDER BY id DESC;";
         PreparedStatement selectStatement = connection.prepareStatement(selectSQL);
         selectStatement.setInt(1, user);
         ResultSet rs = selectStatement.executeQuery();
@@ -79,7 +79,7 @@ public class NotificationMapper implements Mapper<Notification> {
     public List<Notification> findAll() throws SQLException {
         List<Notification> all = new ArrayList<>();
 
-        String selectSQL = "SELECT id FROM notifications;";
+        String selectSQL = "SELECT id FROM notifications ORDER BY id DESC;";
         Statement selectStatement = connection.createStatement();
         ResultSet rs = selectStatement.executeQuery(selectSQL);
 

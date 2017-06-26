@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Set;
 import services.stateservices.user.User;
 import services.stateservices.user.EducationalRepresentative;
 import services.stateservices.user.MedicalRepresentative;
@@ -26,6 +27,9 @@ public class StorageRepository {
     private static EducationalInstitutionMapper educationalInstitutionMapper;
     private static MedicalInstitutionMapper medicalInstitutionMapper;
     private static StorageRepository instance;
+    private static ChildMapper childMapper;
+    private static TicketMapper ticketMapper;
+    private static EduRequestMapper eduRequestMapper;
 
     private StorageRepository() {}
 
@@ -33,6 +37,9 @@ public class StorageRepository {
         if (instance == null) {
             instance = new StorageRepository();
             try {
+                if (childMapper == null) childMapper = new ChildMapper();
+                if (ticketMapper == null) ticketMapper = new TicketMapper();
+                if (eduRequestMapper == null) eduRequestMapper = new EduRequestMapper();
                 if (educationalInstitutionMapper == null) educationalInstitutionMapper = new EducationalInstitutionMapper();
                 if (medicalInstitutionMapper == null) medicalInstitutionMapper = new MedicalInstitutionMapper();
                 if (userMapper == null) userMapper = new UserMapper(educationalInstitutionMapper, medicalInstitutionMapper);
@@ -43,6 +50,26 @@ public class StorageRepository {
             }
         }
         return instance;
+    }
+    
+    public Child getChild(int id) throws SQLException {
+        return childMapper.findByID(id);
+    }
+    
+    public Ticket getTicket(int id) throws SQLException {
+        return ticketMapper.findByID(id);
+    }
+        
+    public EduRequest getEduRequest(int id) throws SQLException {
+        return eduRequestMapper.findByID(id);
+    }
+    
+    public void removeEduRequest(EduRequest request) throws SQLException {
+        eduRequestMapper.delete(request);
+    }
+        
+    public void removeChild(Child child) throws SQLException {
+        childMapper.delete(child);
     }
     
     public boolean addUser(User user) throws AlreadyExistsException {
@@ -236,17 +263,30 @@ public class StorageRepository {
 
     public boolean authenticateUser(String login, String password) {
         User user = getUser(login);
-        return userMapper.authenticateUser(user, password);
+        return ((user != null) ? userMapper.authenticateUser(user, password) : false);
     }
 
     public boolean authenticateUser(User user, String password) {
         return userMapper.authenticateUser(user, password);
     }
 
+    public void signOut (String login) {
+        User user = getUser(login);
+        if (user != null) {
+            user.signOut();
+        }
+    }
+    
     public void clear() {
+        ticketMapper.clear();
+        childMapper.clear();
+        eduRequestMapper.clear();
         educationalInstitutionMapper.clear();
         medicalInstitutionMapper.clear();
         userMapper.clear();
+        eduRequestMapper = null;
+        ticketMapper = null;
+        childMapper = null;
         educationalInstitutionMapper = null;
         medicalInstitutionMapper = null;
         userMapper = null;

@@ -55,4 +55,19 @@ public class Child {
     
     public void setId(int id) { this.id = id; }
     public int getId() { return id; }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if ( (obj == null) || (obj.getClass() != this.getClass()) ) return false;
+        Child other = (Child) obj;
+        return (id == other.getId() && 
+                (parent != null ? parent.equals(other.getParent()) : other.getParent() == null) && 
+                birthCertificate.equals(other.getBirthCertificate())
+                );
+    }
+    
+    @Override
+    public int hashCode() {
+        return Integer.toString(id).hashCode();
+    }
 }

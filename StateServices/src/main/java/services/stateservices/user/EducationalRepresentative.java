@@ -9,6 +9,7 @@ import services.stateservices.errors.NoFreeSeatsException;
 import java.util.Date;
 import java.util.Map;
 import java.util.Set;
+import java.util.List;
 import java.util.Iterator;
 import services.stateservices.entities.Feedback;
 
@@ -72,7 +73,7 @@ public class EducationalRepresentative extends User implements InstitutionRepres
             }
             request.changeStatus(EduRequest.Status.CHILD_IS_ENROLLED);
             Citizen parent = request.getParent();
-            Set<EduRequest> set = parent.getEduRequests();
+            List<EduRequest> set = parent.getEduRequests();
             Iterator<EduRequest> i = set.iterator();
             while (i.hasNext()) {
                 EduRequest r = i.next(); // must be called before you can call i.remove()

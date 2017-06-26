@@ -42,7 +42,7 @@ public class FeedbackMapper implements Mapper<Feedback> {
     public List<Feedback> findAllForInstitution(int institution) throws SQLException {
         List<Feedback> all = new ArrayList<>();
 
-        String selectSQL = "SELECT id FROM feedbacks WHERE institution_id = ?;";
+        String selectSQL = "SELECT id FROM feedbacks WHERE institution_id = ? ORDER BY id DESC;";
         PreparedStatement selectStatement = connection.prepareStatement(selectSQL);
         selectStatement.setInt(1, institution);
         ResultSet rs = selectStatement.executeQuery();
@@ -99,7 +99,7 @@ public class FeedbackMapper implements Mapper<Feedback> {
     public List<Feedback> findAll() throws SQLException {
         List<Feedback> all = new ArrayList<>();
 
-        String selectSQL = "SELECT id FROM feedbacks;";
+        String selectSQL = "SELECT id FROM feedbacks ORDER BY id DESC;";
         Statement selectStatement = connection.createStatement();
         ResultSet rs = selectStatement.executeQuery(selectSQL);
 

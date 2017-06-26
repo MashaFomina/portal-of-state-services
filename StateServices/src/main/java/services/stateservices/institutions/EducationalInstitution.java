@@ -15,7 +15,7 @@ import services.stateservices.user.User;
 public class EducationalInstitution extends Institution {
     private Map<Integer, Integer> seats = new HashMap<>(); // key - class number, value - seats
     private Map<Integer, Integer> busySeats = new HashMap<>(); // key - class number, value - busy seats
-    private Set<EduRequest> requests = new HashSet<>();
+    private List<EduRequest> requests = new ArrayList<>();
     
     public EducationalInstitution(String title, String city, String district, String telephone, String fax, String address, Map<Integer, Integer> seats, Map<Integer, Integer> busySeats) {
         super(title, city, district, telephone, fax, address);
@@ -44,7 +44,7 @@ public class EducationalInstitution extends Institution {
         updated = true;
     }
     
-    public Set<EduRequest> getEduRequests() {
+    public List<EduRequest> getEduRequests() {
         return requests;
     }
         

@@ -4,6 +4,7 @@ import java.util.Date;
 import services.stateservices.user.Citizen;
 import services.stateservices.user.Doctor;
 import services.stateservices.institutions.MedicalInstitution;
+import services.stateservices.user.User;
 
 public class Ticket {
     private int id;
@@ -110,11 +111,32 @@ public class Ticket {
         return visited;
     }
     
+    public boolean canBeRefused() {
+        Date currentDate = new Date();
+        return (!visited && date.after(currentDate));
+    }
+        
     public boolean isTicketForChild() {
         return (child != null);
     }
     
     public MedicalInstitution getInstitution() {
         return (MedicalInstitution) doctor.getInstitution();
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if ( (obj == null) || (obj.getClass() != this.getClass()) ) return false;
+        Ticket other = (Ticket)obj;
+        return (id == other.getId() && 
+                (child != null ? child.equals(other.getChild()) : other.getChild() == null) && 
+                doctor.equals(other.getDoctor()) && 
+                date.equals(other.getDate())
+                );
+    }
+    
+    @Override
+    public int hashCode() {
+        return Integer.toString(id).hashCode();
     }
 }

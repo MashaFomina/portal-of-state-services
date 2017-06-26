@@ -167,5 +167,6 @@ INSERT INTO  doctors (user, position, summary, institution_id, approved) VALUES 
 
 INSERT INTO tickets (user, child, institution_id, doctor, ticket_date)  VALUES ((SELECT user FROM citizens WHERE policy = "1234567891234566"), null, (SELECT id FROM institutions WHERE title = "hospital № 1"), (SELECT id FROM users WHERE login = "doctor"), now());
 INSERT INTO tickets (user, child, institution_id, doctor, ticket_date)  VALUES ((SELECT user FROM citizens WHERE policy = "1234567891234566"), (SELECT id FROM childs WHERE birth_certificate = "IJ12293948"), (SELECT id FROM institutions WHERE title = "hospital № 1"), (SELECT id FROM users WHERE login = "doctor"), now());
+INSERT INTO tickets (user, child, institution_id, doctor, ticket_date)  VALUES ((SELECT user FROM citizens WHERE policy = "1234567891234566"), (SELECT id FROM childs WHERE birth_certificate = "IJ12293948"), (SELECT id FROM institutions WHERE title = "hospital № 1"), (SELECT id FROM users WHERE login = "doctor"), now() + INTERVAL 1 MONTH);
 
 INSERT INTO notifications (user, notification, created) VALUES ((SELECT user FROM citizens WHERE policy = "1234567891234566"), "The ticket was canceled!", now());

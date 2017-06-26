@@ -89,4 +89,16 @@ public abstract class Institution {
     public void addFeedback(Feedback feedback) {
         feedbacks.add(feedback);
     }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if ( (obj == null) || (obj.getClass() != this.getClass()) ) return false;
+        Institution other = (Institution) obj;
+        return (id == other.getId() && title.equals(other.getTitle()) && telephone.equals(other.getTelephone()));
+    }
+    
+    @Override
+    public int hashCode() {
+        return Integer.toString(id).hashCode();
+    }
 }

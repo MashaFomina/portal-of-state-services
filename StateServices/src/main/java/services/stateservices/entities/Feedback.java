@@ -66,4 +66,22 @@ public class Feedback {
         builder.append(text);
         return builder.toString();
     }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if ( (obj == null) || (obj.getClass() != this.getClass()) ) return false;
+        Feedback other = (Feedback) obj;
+        return (id == other.getId() && 
+                text.equals(other.getText()) && 
+                (user != null ? user.equals(other.getUser()) : other.getUser() == null) && 
+                (institution != null ? institution.equals(other.getInstitution()) : other.getInstitution() == null) && 
+                (toUser == null ? toUser.equals(other.getToUser()) : other.getToUser() == null) && 
+                (date != null ? date.equals(other.getDate()) : other.getDate() == null)
+                );
+    }
+    
+    @Override
+    public int hashCode() {
+        return Integer.toString(id).hashCode();
+    }
 }

@@ -35,4 +35,19 @@ public class Notification {
     public String toString() {
         return date + ": " + notification;
     }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if ( (obj == null) || (obj.getClass() != this.getClass()) ) return false;
+        Notification other = (Notification)obj;
+        return (id == other.getId() && 
+                notification.equals(other.getNotification()) && 
+                (date != null ? date.equals(other.getDate()): other.getDate() == null)
+                );
+    }
+    
+    @Override
+    public int hashCode() {
+        return Integer.toString(id).hashCode();
+    }
 }

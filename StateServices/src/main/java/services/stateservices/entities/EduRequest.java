@@ -20,6 +20,14 @@ public class EduRequest {
         public String getText() {
           return this.text;
         }
+        
+        public String getBeautifulText() {
+            String text = getText();
+            if (text.equals("ACCEPTED_BY_INSTITUTION")) return "ACCEPTED BY INSTITUTION";
+            if (text.equals("ACCEPTED_BY_PARENT")) return "ACCEPTED BY PARENT";
+            if (text.equals("CHILD_IS_ENROLLED")) return "CHILD IS ENROLLED";
+            return text;
+        }
 
         public static Status fromString(String text) {
           for (Status b : Status.values()) {
@@ -131,5 +139,21 @@ public class EduRequest {
     
     public int getClassNumber() {
         return classNumber;
+    }
+     
+    @Override
+    public boolean equals(Object obj) {
+        if ( (obj == null) || (obj.getClass() != this.getClass()) ) return false;
+        EduRequest other = (EduRequest) obj;
+        return (id == other.getId() && 
+                (child != null ? child.equals(other.getChild()) : other.getChild() == null) && 
+                (institution != null ? institution.equals(other.getInstitution()) : other.getInstitution() == null) && 
+                (creationDate != null ? creationDate.equals(other.getCreationDate()) : other.getCreationDate() == null)
+                );
+    }
+    
+    @Override
+    public int hashCode() {
+        return Integer.toString(id).hashCode();
     }
 }

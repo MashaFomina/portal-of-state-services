@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.Calendar;
 import java.util.Map;
 import java.util.Set;
+import java.util.List;
 import junit.framework.TestCase;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
@@ -83,7 +84,7 @@ public class BPEnrollChildTest extends TestCase {
         assertTrue(request1.isOpened());
         request2 = citizen.createEduRequest(child, institution2, 1);
         assertTrue(request2.isOpened());
-        Set<EduRequest> set = citizen.getEduRequests();
+        List<EduRequest> set = citizen.getEduRequests();
         assertTrue(set.contains(request1));
         assertTrue(set.contains(request2));
         set = institution1.getEduRequests();
@@ -134,7 +135,7 @@ public class BPEnrollChildTest extends TestCase {
         assertTrue(request1.isOpened());
         request2 = citizen.createEduRequest(child, institution2, 1);
         assertTrue(request2.isOpened());
-        Set<EduRequest> set = citizen.getEduRequests();
+        List<EduRequest> set = citizen.getEduRequests();
         assertTrue(set.contains(request1));
         assertTrue(set.contains(request2));
         set = institution1.getEduRequests();
@@ -167,7 +168,7 @@ public class BPEnrollChildTest extends TestCase {
         assertTrue(request1.isOpened());
         request2 = citizen.createEduRequest(child, institution2, 1);
         assertTrue(request2.isOpened());
-        Set<EduRequest> set = citizen.getEduRequests();
+        List<EduRequest> set = citizen.getEduRequests();
         assertTrue(set.contains(request1));
         assertTrue(set.contains(request2));
         set = institution1.getEduRequests();
@@ -203,7 +204,7 @@ public class BPEnrollChildTest extends TestCase {
         assertTrue(request1.isOpened());
         request2 = citizen.createEduRequest(child, institution2, 1);
         assertTrue(request2.isOpened());
-        Set<EduRequest> set = citizen.getEduRequests();
+        List<EduRequest> set = citizen.getEduRequests();
         assertTrue(set.contains(request1));
         assertTrue(set.contains(request2));
         set = institution1.getEduRequests();
@@ -249,7 +250,7 @@ public class BPEnrollChildTest extends TestCase {
         } catch (NoFreeSeatsException e) {
             assertTrue(e.getMessage(), true);
         }
-        Set<EduRequest> set = citizen.getEduRequests();
+        List<EduRequest> set = citizen.getEduRequests();
         assertFalse(set.contains(request1));
         set = institution1.getEduRequests();
         assertFalse(set.contains(request1));

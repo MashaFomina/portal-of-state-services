@@ -23,11 +23,11 @@ import services.stateservices.user.Doctor;
 
 public class TicketMapper implements Mapper<Ticket> {
 
-    private static Set<Ticket> tickets = new HashSet<>();
+    private static Set<Ticket> tickets;
     private static Connection connection;
     private static ChildMapper childMapper;
-    private static Map<Integer, Integer> userIds = new HashMap<>();
-    private static Map<Integer, Integer> institutionIds = new HashMap<>();
+    private static Map<Integer, Integer> userIds;
+    private static Map<Integer, Integer> institutionIds;
     private static StorageRepository repository = null;
 
     public TicketMapper() throws IOException, SQLException {
@@ -37,6 +37,12 @@ public class TicketMapper implements Mapper<Ticket> {
             childMapper = new ChildMapper();
         if (repository == null)
             repository = StorageRepository.getInstance();
+        if (tickets == null)
+            tickets = new HashSet<>();
+        if (userIds == null)
+            userIds = new HashMap<>();
+        if (institutionIds == null) 
+            institutionIds = new HashMap<>();
     }
 
     public Integer getUserId(int eduRequestId) {
@@ -86,7 +92,7 @@ public class TicketMapper implements Mapper<Ticket> {
 
         LocalDate currentDate = LocalDate.now();
         LocalDate monthAgo = currentDate.minus(1, ChronoUnit.MONTHS);
-        String selectSQL = "SELECT id FROM tickets WHERE institution_id = ? and ticket_date > ?;";
+        String selectSQL = "SELECT id FROM tickets WHERE institution_id = ? and ticket_date > ? ORDER BY id DESC;";
         PreparedStatement selectStatement = connection.prepareStatement(selectSQL);
         selectStatement.setInt(1, institution);
         selectStatement.setDate(2, java.sql.Date.valueOf(monthAgo));
@@ -107,7 +113,7 @@ public class TicketMapper implements Mapper<Ticket> {
     public List<Ticket> findAllForUser(int user) throws SQLException {
         List<Ticket> all = new ArrayList<>();
 
-        String selectSQL = "SELECT id FROM tickets WHERE user = ?;";
+        String selectSQL = "SELECT id FROM tickets WHERE user = ? ORDER BY id DESC;";
         PreparedStatement selectStatement = connection.prepareStatement(selectSQL);
         selectStatement.setInt(1, user);
         ResultSet rs = selectStatement.executeQuery();
@@ -130,7 +136,7 @@ public class TicketMapper implements Mapper<Ticket> {
 
         LocalDate currentDate = LocalDate.now();
         LocalDate monthAgo = currentDate.minus(1, ChronoUnit.MONTHS);
-        String selectSQL = "SELECT id FROM tickets WHERE doctor = ? and ticket_date > ?;";
+        String selectSQL = "SELECT id FROM tickets WHERE doctor = ? and ticket_date > ? ORDER BY id DESC;";
         PreparedStatement selectStatement = connection.prepareStatement(selectSQL);
         selectStatement.setInt(1, doctor);
         selectStatement.setDate(2, java.sql.Date.valueOf(monthAgo));
@@ -151,8 +157,9 @@ public class TicketMapper implements Mapper<Ticket> {
     @Override
     // In other mapper we must set institution and user
     public Ticket findByID(int id) throws SQLException {
-        for (Ticket it : tickets)
+        for (Ticket it : tickets) {
             if (it.getId() == id) return it;
+        }
 
         String selectSQL = "SELECT * FROM tickets WHERE id = ?;";
         PreparedStatement selectStatement = connection.prepareStatement(selectSQL);
@@ -202,7 +209,7 @@ public class TicketMapper implements Mapper<Ticket> {
     public List<Ticket> findAll() throws SQLException {
         List<Ticket> all = new ArrayList<>();
 
-        String selectSQL = "SELECT id FROM tickets;";
+        String selectSQL = "SELECT id FROM tickets ORDER BY id DESC;";
         Statement selectStatement = connection.createStatement();
         ResultSet rs = selectStatement.executeQuery(selectSQL);
 

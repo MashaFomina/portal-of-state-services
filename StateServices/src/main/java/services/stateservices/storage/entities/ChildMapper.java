@@ -118,6 +118,27 @@ public class ChildMapper implements Mapper<Child> {
         }
     }
 
+    public void delete(Child child) throws SQLException {
+        childs.remove(child);
+
+        String deleteSQL = "DELETE FROM edu_requests WHERE child = ?;";
+        PreparedStatement deleteStatement = connection.prepareStatement(deleteSQL);
+        deleteStatement.setInt(1, child.getId());
+        deleteStatement.execute();
+        
+        deleteSQL = "DELETE FROM tickets WHERE child = ?;";
+        deleteStatement = connection.prepareStatement(deleteSQL);
+        deleteStatement.setInt(1, child.getId());
+        deleteStatement.execute();
+        
+        deleteSQL = "DELETE FROM childs WHERE id = ? LIMIT 1;";
+        deleteStatement = connection.prepareStatement(deleteSQL);
+        deleteStatement.setInt(1, child.getId());
+        deleteStatement.execute();
+        
+        deleteStatement.close();
+    }
+        
     @Override
     public void closeConnection() throws SQLException {
         connection.close();

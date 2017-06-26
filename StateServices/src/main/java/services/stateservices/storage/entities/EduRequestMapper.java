@@ -77,7 +77,7 @@ public class EduRequestMapper implements Mapper<EduRequest> {
     public List<EduRequest> findAllForInstitution(int institution) throws SQLException {
         List<EduRequest> all = new ArrayList<>();
 
-        String selectSQL = "SELECT id FROM edu_requests WHERE institution_id = ?;";
+        String selectSQL = "SELECT id FROM edu_requests WHERE institution_id = ? ORDER BY id DESC;";
         PreparedStatement selectStatement = connection.prepareStatement(selectSQL);
         selectStatement.setInt(1, institution);
         ResultSet rs = selectStatement.executeQuery();
@@ -97,7 +97,7 @@ public class EduRequestMapper implements Mapper<EduRequest> {
     public List<EduRequest> findAllForUser(int user) throws SQLException {
         List<EduRequest> all = new ArrayList<>();
 
-        String selectSQL = "SELECT id FROM edu_requests WHERE parent = ?;";
+        String selectSQL = "SELECT id FROM edu_requests WHERE parent = ? ORDER BY id DESC;";
         PreparedStatement selectStatement = connection.prepareStatement(selectSQL);
         selectStatement.setInt(1, user);
         ResultSet rs = selectStatement.executeQuery();
@@ -158,7 +158,7 @@ public class EduRequestMapper implements Mapper<EduRequest> {
     public List<EduRequest> findAll() throws SQLException {
         List<EduRequest> all = new ArrayList<>();
 
-        String selectSQL = "SELECT id FROM edu_requests;";
+        String selectSQL = "SELECT id FROM edu_requests ORDER BY id DESC;";
         Statement selectStatement = connection.createStatement();
         ResultSet rs = selectStatement.executeQuery(selectSQL);
 
