@@ -4,6 +4,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.Date;
+import java.util.List;
+import java.util.ArrayList;
 import services.stateservices.entities.EduRequest;
 import services.stateservices.entities.Feedback;
 import services.stateservices.entities.Ticket;
@@ -14,7 +16,7 @@ import services.stateservices.user.User;
 
 public class MedicalInstitution extends Institution {
     private Set<Doctor> doctors = new HashSet<>();
-    private Set<Ticket> tickets = new HashSet<>();
+    private List<Ticket> tickets = new ArrayList<>();
     
     public MedicalInstitution(String title, String city, String district, String telephone, String fax, String address) {
         super(title, city, district, telephone, fax, address);
@@ -70,7 +72,7 @@ public class MedicalInstitution extends Institution {
         }
     }
     
-    public Set<Ticket> getTickets() {
+    public List<Ticket> getTickets() {
         return tickets;
     }
     

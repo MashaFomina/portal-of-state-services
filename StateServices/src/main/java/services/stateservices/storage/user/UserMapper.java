@@ -458,6 +458,41 @@ public class UserMapper implements UserMapperInterface<User> {
         }
     }
     
+    public void deleteDoctor(String login) throws SQLException {
+        int doctorId = 0;
+        for (User it : users) {
+            if (it.getLogin().equals(login)) {
+                doctorId = it.getId();
+                users.remove(it);
+                break;
+            }
+        }
+
+        if (doctorId < 1) return;
+        
+        String deleteSQL = "DELETE FROM feedbacks WHERE user = ? or to_user = ?;";
+        PreparedStatement deleteStatement = connection.prepareStatement(deleteSQL);
+        deleteStatement.setInt(1, doctorId);
+        deleteStatement.setInt(2, doctorId);
+        deleteStatement.execute();
+        
+        deleteSQL = "DELETE FROM tickets WHERE doctor = ?;";
+        deleteStatement = connection.prepareStatement(deleteSQL);
+        deleteStatement.setInt(1, doctorId);
+        deleteStatement.execute();
+        
+        deleteSQL = "DELETE FROM doctors WHERE user = ?;";
+        deleteStatement = connection.prepareStatement(deleteSQL);
+        deleteStatement.setInt(1, doctorId);
+        deleteStatement.execute();
+        
+        deleteSQL = "DELETE FROM users WHERE id = ?;";
+        deleteStatement = connection.prepareStatement(deleteSQL);
+        deleteStatement.setInt(1, doctorId);
+        deleteStatement.execute();
+        deleteStatement.close();
+    }
+    
     @Override
     public void closeConnection() throws SQLException {
         ntfMapper.closeConnection();

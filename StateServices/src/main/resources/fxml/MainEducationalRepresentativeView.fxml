@@ -6,8 +6,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-
-<AnchorPane id="AnchorPane" prefHeight="612.0" prefWidth="997.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8" fx:controller="services.stateservices.controllers.MainEducationalRepresentativeViewController">
+<AnchorPane id="AnchorPane" prefHeight="612.0" prefWidth="997.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="services.stateservices.controllers.MainEducationalRepresentativeViewController">
    <children>
       <Button fx:id="signOutButton" layoutX="913.0" layoutY="8.0" mnemonicParsing="false" onMouseClicked="#onClickSignOutButton" text="Sign out" />
       <TabPane layoutX="24.0" layoutY="44.0" prefHeight="557.0" prefWidth="957.0" tabClosingPolicy="UNAVAILABLE">
@@ -44,9 +43,9 @@
             <content>
               <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                      <children>
-                        <TableView fx:id="requestDateColumn" layoutX="5.0" layoutY="6.0" prefHeight="511.0" prefWidth="950.0">
+                        <TableView fx:id="requestTable" layoutX="5.0" layoutY="6.0" prefHeight="511.0" prefWidth="950.0">
                           <columns>
-                            <TableColumn prefWidth="158.0" text="Date" />
+                            <TableColumn fx:id="requestDateColumn" prefWidth="158.0" text="Date" />
                             <TableColumn fx:id="requestAppointmentColumn" minWidth="0.0" prefWidth="165.0" text="Appointment" />
                               <TableColumn fx:id="requestStatusColumn" prefWidth="161.0" text="Status" />
                               <TableColumn fx:id="requestChildColumn" prefWidth="149.0" text="Child" />

@@ -178,7 +178,7 @@ public class MainCitizenViewController {
         TextField birthCertificate = new TextField();
         birthCertificate.setPromptText("Birth certificate");
         TextField birthDate = new TextField();
-        birthCertificate.setPromptText("Birth date");
+        birthDate.setPromptText("Birth date");
 
         gridPane.add(new Label("Full name:"), 0, 0);
         gridPane.add(fullName, 1, 0);
@@ -226,31 +226,6 @@ public class MainCitizenViewController {
                 alert.showAndWait();
             }
         });
-        /*TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Enter information");
-        dialog.setHeaderText("Enter full name");
-
-        Optional<String> result = dialog.showAndWait();
-        if (!result.isPresent()) return;
-
-        boolean added = false;*/
-        /*try {
-            added = facade.createProject(user, result.get());
-        } catch (Exception e) {
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Error");
-            alert.setHeaderText(e.getMessage());
-            alert.showAndWait();
-        }*/
-
-        /*if (added) {
-            onClickUpdateButton();
-        } else {
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Error");
-            alert.setHeaderText("Project with name \"" + result.get() + "\" already exists");
-            alert.showAndWait();
-        }*/
     }
 
 
@@ -422,13 +397,13 @@ public class MainCitizenViewController {
                             setText(null);
                         } else if (fields.get("mustAccept").equals("yes")) {
                             btnAccept.setOnAction(event -> {
-                                boolean ret = facade.acceptEduRequest(user, fields.get("id"));
+                                boolean ret = facade.acceptEduRequestByParent(user, fields.get("id"));
                                 if (ret) {
                                     onClickUpdateButton();
                                 } else {
                                     Alert alert = new Alert(Alert.AlertType.INFORMATION);
                                     alert.setTitle("Error");
-                                    alert.setHeaderText("Error ocured during refusing ticket!");
+                                    alert.setHeaderText("Error ocured during accept request!");
                                     alert.showAndWait();
                                 }
                             });
@@ -444,7 +419,7 @@ public class MainCitizenViewController {
                                 } else {
                                     Alert alert = new Alert(Alert.AlertType.INFORMATION);
                                     alert.setTitle("Error");
-                                    alert.setHeaderText("Error ocured during refusing ticket!");
+                                    alert.setHeaderText("Error ocured during remove request!");
                                     alert.showAndWait();
                                 }
                             });
@@ -547,5 +522,9 @@ public class MainCitizenViewController {
             return;
         }
         eduRequestTable.setItems(tickets); 
+    }
+
+    @FXML
+    private void onClickTakeTicketButton(MouseEvent event) {
     }
 }

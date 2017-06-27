@@ -2,6 +2,8 @@ package services.stateservices.institutions;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.List;
+import java.util.ArrayList;
 import services.stateservices.entities.Feedback;
 import services.stateservices.errors.NoRightsException;
 import services.stateservices.user.User;
@@ -15,7 +17,7 @@ public abstract class Institution {
     private String fax;
     private String address;
     protected boolean updated = false;
-    protected Set<Feedback> feedbacks = new HashSet<>();
+    protected List<Feedback> feedbacks = new ArrayList<>();
     
     protected Institution(String title, String city, String district, String telephone, String fax, String address) {
         this.title = title;
@@ -80,7 +82,7 @@ public abstract class Institution {
         return address;
     }
     
-    public Set<Feedback> getFeedbacks() {
+    public List<Feedback> getFeedbacks() {
         return feedbacks;
     }
     

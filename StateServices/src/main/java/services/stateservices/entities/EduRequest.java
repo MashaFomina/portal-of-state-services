@@ -97,6 +97,11 @@ public class EduRequest {
         updated = true;
     }
     
+    public boolean isPassedAppointment() {
+        Date currentDate = new Date();
+        return (appointment != null ? appointment.before(currentDate): false);
+    }
+    
     public EducationalInstitution getInstitution() {
         return institution;
     }

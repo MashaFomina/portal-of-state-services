@@ -128,7 +128,7 @@ public class FeedbackMapper implements Mapper<Feedback> {
             insertStatement.setTimestamp(3, new Timestamp(item.getDate().getTime()));
             insertStatement.setInt(4, item.getInstitution().getId());
             if (toUser != null)
-                insertStatement.setInt(1, toUser.getId());
+                insertStatement.setInt(5, toUser.getId());
             insertStatement.execute();
             ResultSet rs = insertStatement.getGeneratedKeys();
             if (rs.next()) {

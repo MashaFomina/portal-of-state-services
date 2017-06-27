@@ -3,6 +3,7 @@ package services.stateservices.user;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -34,23 +35,17 @@ public class MedicalRepresentative extends User implements InstitutionRepresenta
         repository = StorageRepository.getInstance();
     }
     
-    public boolean addDoctor(String login, String password, String fullName, String email, String position, String summary) throws NoRightsException {
-        Doctor newDoctor = new Doctor(login, password, fullName, email, institution, position, summary, true);
-        boolean result = false;
-        try {
-            result = repository.addUser(newDoctor);
-            institution.addDoctor(newDoctor);
-        } catch (AlreadyExistsException ex) {
-            Logger.getLogger(MedicalRepresentative.class.getName()).log(Level.SEVERE, null, ex);
+    public void addDoctor(Doctor doctor) throws NoRightsException {
+        if (!doctor.getInstitution().equals(institution)) {
+            throw new NoRightsException("You have no rights to add doctor!");
         }
-        return result;
+        institution.addDoctor(doctor);
     }
     
     public void removeDoctor(Doctor doctor) throws NoRightsException {
         if (!doctor.getInstitution().equals(institution)) {
             throw new NoRightsException("You have no rights to remove this doctor!");
         }
-        repository.removeDoctor(doctor.getLogin());
         institution.removeDoctor(doctor);
     }
     
@@ -95,9 +90,10 @@ public class MedicalRepresentative extends User implements InstitutionRepresenta
         if (!ticket.getDoctor().getInstitution().equals(institution)) {
             throw new NoRightsException("You have no rights to delete tickets of doctor from other institution!");
         }
-        ticket.getUser().addNotification("Sorry, but your ticket to " + ticket.getDoctor().getFullName() + " in " + institution.getTitle() + " on " + ticket.getDate() + " was canceled!");
+        
         Citizen user = ticket.getUser();
         if (user != null) {
+            user.addNotification("Sorry, but your ticket to " + ticket.getDoctor().getFullName() + " in " + institution.getTitle() + " on " + ticket.getDate() + " was canceled!");
             user.removeTicket(ticket);
         }
         institution.removeTicket(ticket);
@@ -107,7 +103,7 @@ public class MedicalRepresentative extends User implements InstitutionRepresenta
         if (!doctor.getInstitution().equals(institution)) {
             throw new NoRightsException("You have no rights to delete tickets of doctor from other institution!");
         }
-        Set<Ticket> set = institution.getTickets();
+        List<Ticket> set = institution.getTickets();
         Iterator<Ticket> i = set.iterator();
         Citizen user;
         Ticket t;
@@ -127,7 +123,8 @@ public class MedicalRepresentative extends User implements InstitutionRepresenta
         if (!ticket.getDoctor().getInstitution().equals(institution)) {
             throw new NoRightsException("You have no rights to confirm visits of other institution!");
         }
-        ticket.getUser().addNotification("Now your can leave feedback about your visit to " + institution.getTitle());
+        if (ticket.getUser() != null)
+            ticket.getUser().addNotification("Now your can leave feedback about your visit to " + institution.getTitle());
         ticket.setVisited(true, summary);
     }
     

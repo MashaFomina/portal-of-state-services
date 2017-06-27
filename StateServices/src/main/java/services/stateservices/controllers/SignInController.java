@@ -44,6 +44,9 @@ public class SignInController {
                 if(facade.isEducationalRepresentative(login)) {
                     Main.showEducationalRepresentativeView(login);
                 }
+                if(facade.isMedicalRepresentative(login)) {
+                    Main.showMedicalRepresentativeView(login);
+                }
             } else {
                 errorLabel.setText("Incorrect login or password");
             }

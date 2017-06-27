@@ -197,8 +197,8 @@ public class Main extends Application {
             String fxmlFile = "/fxml/MainEducationalRepresentativeView.fxml";
             FXMLLoader loader = new FXMLLoader();
             AnchorPane root = (AnchorPane) loader.load(Main.class.getClass().getResourceAsStream(fxmlFile));
-            MainCitizenViewController uvc = loader.getController();
-            uvc.setup(user);
+            MainEducationalRepresentativeViewController uvc = loader.getController();
+            uvc.setup(user, facade.getInstitutionIdByRepresentative(user));
             Scene scene = new Scene(root);
             mainStage.setScene(scene);
             mainStage.setOnCloseRequest(windowEvent -> Platform.exit());
@@ -207,6 +207,21 @@ public class Main extends Application {
         }
     }
     
+    public static void showMedicalRepresentativeView(String user) {
+        try {
+            String fxmlFile = "/fxml/MainMedicalRepresentativeView.fxml";
+            FXMLLoader loader = new FXMLLoader();
+            AnchorPane root = (AnchorPane) loader.load(Main.class.getClass().getResourceAsStream(fxmlFile));
+            MainMedicalRepresentativeViewController uvc = loader.getController();
+            uvc.setup(user, facade.getInstitutionIdByRepresentative(user));
+            Scene scene = new Scene(root);
+            mainStage.setScene(scene);
+            mainStage.setOnCloseRequest(windowEvent -> Platform.exit());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+        
     /*public static void showRegisterView() {
         try {
             String fxmlFile = "/fxml/RegisterView.fxml";

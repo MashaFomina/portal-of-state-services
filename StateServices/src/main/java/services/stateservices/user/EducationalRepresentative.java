@@ -5,6 +5,7 @@ import services.stateservices.errors.NoRightsException;
 import services.stateservices.errors.InvalidAppointmentDateException;
 import services.stateservices.institutions.EducationalInstitution;
 import services.stateservices.errors.NoFreeSeatsException;
+import services.stateservices.errors.InvalidDataForSavingSeatsException;
 
 import java.util.Date;
 import java.util.Map;
@@ -97,7 +98,9 @@ public class EducationalRepresentative extends User implements InstitutionRepres
         return institution;
     }
     
-    public void setSeats(int classNumber, int seats, int busySeats) {
+    public void setSeats(int classNumber, int seats, int busySeats) throws InvalidDataForSavingSeatsException {
+        if ((classNumber > 11 || classNumber < 1) || seats < 1 || busySeats < 1 || busySeats > seats)
+            throw new InvalidDataForSavingSeatsException();
         institution.setSeats(classNumber, seats, busySeats);
     }
         

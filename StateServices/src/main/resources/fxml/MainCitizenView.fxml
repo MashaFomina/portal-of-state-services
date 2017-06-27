@@ -89,7 +89,7 @@
       </TabPane>
       <Button fx:id="signOutButton" layoutX="829.0" layoutY="6.0" mnemonicParsing="false" onMouseClicked="#onClickSignOutButton" text="Sign out" />
       <Button fx:id="updateButton" layoutX="829.0" layoutY="35.0" mnemonicParsing="false" onMouseClicked="#onClickUpdateButton" text="Update" />
-      <Button fx:id="takeTicketButton" layoutX="748.0" layoutY="6.0" mnemonicParsing="false" onMouseClicked="#onClickAddProjectButton" text="Take ticket" />
+      <Button fx:id="takeTicketButton" layoutX="748.0" layoutY="6.0" mnemonicParsing="false" onMouseClicked="#onClickTakeTicketButton" text="Take ticket" />
       <Label fx:id="policyLabel" layoutX="250.0" layoutY="39.0" prefHeight="17.0" prefWidth="166.0" text="1234567891234566" />
       <Label fx:id="passportLabel" layoutX="66.0" layoutY="39.0" prefHeight="17.0" prefWidth="105.0" text="4050123450" />
       <Label fx:id="birthDatetLabel" layoutX="474.0" layoutY="39.0" prefHeight="17.0" prefWidth="73.0" text="1995-01-04" />

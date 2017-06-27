@@ -220,9 +220,12 @@ public class StorageRepository {
         }     
     }
         
-    public void removeDoctor(String login) {
-        /*doctors.remove(login);
-        users.remove(login);*/
+    public void removeDoctor(String login) throws SQLException {
+        userMapper.deleteDoctor(login);
+    }
+
+    public void removeTicket(Ticket ticket) throws SQLException {
+        ticketMapper.delete(ticket);
     }
 
     public Administrator getAdministrator(String login) {
