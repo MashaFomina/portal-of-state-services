@@ -110,9 +110,55 @@ public class Facade implements FacadeInterface {
         return fields;
     }
     
-    public List<Struct> getTicketsForMedicalInstitution(int id)
+    public List<Struct> getInstitutions(String city, String district, boolean isEdu) {
+        List<EducationalInstitution> educationalInstitutions = new ArrayList<>();
+        List<MedicalInstitution> medicalInstitutions = new ArrayList<>();
+        if (isEdu) {
+            educationalInstitutions = repository.getEducationalInstitutions(city, district);
+        }
+        else {
+            medicalInstitutions = repository.getMedicalInstitutions(city, district);
+        }
+        List<Struct> fields = new ArrayList<>();
+        if ((isEdu && educationalInstitutions != null) || (!isEdu && medicalInstitutions != null)) {
+            for (Institution i: (isEdu ? educationalInstitutions : medicalInstitutions)) {
+                Struct struct = new Struct();
+                struct.add("id", Integer.toString(i.getId()));
+                struct.add("title", i.getTitle());
+                struct.add("address", i.getAddress());
+                struct.add("city", i.getCity());
+                struct.add("district", i.getDistrict());
+                struct.add("fax", i.getFax());
+                struct.add("telephone", i.getTelephone());
+                fields.add(struct);
+            }
+        }
+        return fields;
+    }
+    
+    public List<String> getCities(boolean isEdu) {
+        return repository.getCities(isEdu);
+    }
+    
+    public List<String> getDistricts(String city, boolean isEdu) {
+        return repository.getDistricts(city, isEdu);
+    }
+    
+    public boolean canAddFeedbackToMedicalInstitution (String login, int institutionId) {
+        User user = repository.getUser(login);
+        MedicalInstitution institution = repository.getMedicalInstitution(institutionId);
+        return institution.canAddFeedback(user);
+    }
+    
+    public List<Struct> getTicketsForMedicalInstitution(int id, String doctorLogin)
     {
-        List<Ticket> tickets = repository.getMedicalInstitution(id).getTickets();
+        Doctor doctor = repository.getDoctor(doctorLogin);
+        List<Ticket> tickets = new ArrayList<>();
+        try {
+            tickets = (doctor == null) ? repository.getMedicalInstitution(id).getTickets() : repository.getMedicalInstitution(id).getTickets(doctor);
+        } catch (NoRightsException ex) {
+            Logger.getLogger(Facade.class.getName()).log(Level.SEVERE, null, ex);
+        }
         List<Struct> fields = new ArrayList<>();
         for (Ticket t: tickets) {
             Struct struct = new Struct();
@@ -120,6 +166,7 @@ public class Facade implements FacadeInterface {
             struct.add("date", dateFormat.format(t.getDate()));
             struct.add("institution", t.getInstitution().getTitle());
             struct.add("doctor", t.getDoctor().getFullName() + " (" + t.getDoctor().getPosition() + ")");
+            struct.add("doctorLogin", t.getDoctor().getLogin());
             struct.add("child", t.getChild() != null ? t.getChild().getFullName() : "");
             struct.add("citizen", t.getUser() != null ? t.getUser().getFullName() : "");
             struct.add("visited", t.isVisited() ? "yes" : "no");
@@ -290,7 +337,36 @@ public class Facade implements FacadeInterface {
         }
         return fields;
     }
-        
+    
+    public List<Integer> getClassesWithFreeSeatsForEducationalInstitution(int id) {
+        EducationalInstitution institution = repository.getEducationalInstitution(id);
+        Map<Integer, Integer> seats = institution.getSeats();
+        List<Integer> classes = new ArrayList<>();
+
+        for (Integer classNumber: seats.keySet()) {
+            Integer freeSeats = seats.get(classNumber) - institution.getBusySeats(classNumber);
+            if (freeSeats > 0) {
+                classes.add(classNumber);
+            }
+        }
+        return classes;
+    }
+  
+    public boolean addEduRequest(String login, int institutionId, int childId, int classNumber) {
+        boolean result = false;
+        try {
+            Citizen citizen = repository.getCitizen(login);
+            EducationalInstitution institution = repository.getEducationalInstitution(institutionId);
+            Child child = repository.getChild(childId);
+            citizen.createEduRequest(child, institution, classNumber);
+            repository.updateEducationalInstitution(institution);
+            result = true;
+        } catch (NoFreeSeatsException | NoRightsException | SQLException ex) {
+            Logger.getLogger(Facade.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return result;
+    }
+    
     public boolean acceptEduRequestByParent(String login, String requestId) {
         boolean result = false;
         try {
@@ -377,6 +453,33 @@ public class Facade implements FacadeInterface {
         return result;
     }
     
+    public boolean addFeedbackByUser(String login, int institutionId, String text, String loginUserTo, boolean isEdu) {
+        boolean result = false;
+        User user = repository.getUser(login);
+        User userTo = loginUserTo.length() > 0 ? repository.getUser(loginUserTo) : null;
+        if (user != null) {
+            try {
+                if (isEdu) {
+                    EducationalInstitution institution = repository.getEducationalInstitution(institutionId);
+                    if (userTo == null) user.addFeedback(institution, text);
+                    else user.addFeedbackTo(institution, text, userTo);
+                    repository.updateEducationalInstitution(institution);
+
+                }
+                else {
+                    MedicalInstitution institution = repository.getMedicalInstitution(institutionId);
+                    if (userTo == null) user.addFeedback(institution, text);
+                    else user.addFeedbackTo(institution, text, userTo);
+                    repository.updateMedicalInstitution(institution);
+                }
+                result = true;
+            } catch (NoRightsException | SQLException ex) {
+                Logger.getLogger(Facade.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        return result;
+    }
+        
     public int getInstitutionIdByRepresentative(String login) {
         InstitutionRepresentative user = (InstitutionRepresentative) repository.getUser(login);
         return user.getInstitution().getId();

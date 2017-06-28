@@ -37,7 +37,7 @@ abstract class InstitutionMapper {
     }
     
     public ArrayList<String> getCityDistricts(String city) throws SQLException {
-        if (!districts.containsKey(city)) return districts.get(city);
+        if (districts.containsKey(city)) return districts.get(city);
 
         String selectSQL = "SELECT DISTINCT district FROM institutions WHERE city = ? and is_edu = ?;";
         PreparedStatement selectStatement = connection.prepareStatement(selectSQL);

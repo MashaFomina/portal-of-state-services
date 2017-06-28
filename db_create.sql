@@ -136,11 +136,14 @@ INSERT INTO users(login, full_name, email, password, user_type) VALUES ("citizen
 INSERT INTO citizens (user, policy, passport, birth_date) VALUES ((SELECT id FROM users WHERE login = "citizen1"), "1234567891234567", "4050123450", "1995-01-04");
 
 INSERT INTO institutions (title, city, district, telephone, fax, address, is_edu)  VALUES ("school № 1", "Saint-Petersburg", "Kirovskyi", "88127777777", "88127777777", "pr. Veteranov h. 69", 1);
-INSERT INTO institutions (title, city, district, telephone, fax, address, is_edu)  VALUES ("school № 2", "Saint-Petersburg", "Kirovskyi", "88127777779", "88127777779", "pr. Veteranov h. 79", 1);
+INSERT INTO institutions (title, city, district, telephone, fax, address, is_edu)  VALUES ("school № 2", "Saint-Petersburg", "Moskovskiy", "88127777779", "88127777779", "pr. Veteranov h. 79", 1);
 INSERT INTO educational_institutions_seats (institution_id, class_number, seats, busy_seats) VALUES ((SELECT id FROM institutions WHERE title = "school № 1"), 1, 50, 10);
 INSERT INTO educational_institutions_seats (institution_id, class_number, seats, busy_seats) VALUES ((SELECT id FROM institutions WHERE title = "school № 2"), 1, 20, 5);
 INSERT INTO educational_institutions_seats (institution_id, class_number, seats, busy_seats) VALUES ((SELECT id FROM institutions WHERE title = "school № 1"), 2, 50, 10);
 INSERT INTO educational_institutions_seats (institution_id, class_number, seats, busy_seats) VALUES ((SELECT id FROM institutions WHERE title = "school № 2"), 2, 20, 5);
+INSERT INTO institutions (title, city, district, telephone, fax, address, is_edu)  VALUES ("school № 3", "Moscow", "Kirovskyi", "88127777787", "88127777777", "pr. Veteranov h. 68", 1);
+INSERT INTO institutions (title, city, district, telephone, fax, address, is_edu)  VALUES ("school № 4", "Moscow", "Moskovskiy", "88127777799", "88127777779", "pr. Veteranov h. 74", 1);
+INSERT INTO institutions (title, city, district, telephone, fax, address, is_edu)  VALUES ("school № 5", "Saint-Petersburg", "Kirovskyi", "88127777877", "88127797777", "pr. Veteranov h. 89", 1);
 
 INSERT INTO edu_requests (status, child, parent, institution_id, creation_date, class_number) VALUES ("OPENED", (SELECT id FROM childs WHERE birth_certificate = "IJ12293948"), (SELECT parent FROM childs WHERE birth_certificate = "IJ12293948"), (SELECT id FROM institutions WHERE title = "school № 1"), now(), 1);
 INSERT INTO edu_requests (status, child, parent, institution_id, creation_date, class_number) VALUES ("OPENED", (SELECT id FROM childs WHERE birth_certificate = "IJ12293948"), (SELECT parent FROM childs WHERE birth_certificate = "IJ12293948"), (SELECT id FROM institutions WHERE title = "school № 2"), now(), 1);
@@ -151,7 +154,12 @@ INSERT INTO users(login, full_name, email, password, user_type) VALUES ("edur", 
 INSERT INTO representatives (user, institution_id, approved) VALUES ((SELECT id FROM users WHERE login = "edur"), (SELECT id FROM institutions WHERE title = "school № 1"), 1);
 
 INSERT INTO institutions (title, city, district, telephone, fax, address)  VALUES ("hospital № 1", "Saint-Petersburg", "Kirovskyi", "88127777777", "88127777777", "pr. Veteranov h. 69");
-INSERT INTO institutions (title, city, district, telephone, fax, address)  VALUES ("hospital № 2", "Saint-Petersburg", "Kirovskyi", "88127777778", "88127777778", "pr. Veteranov h. 69");
+INSERT INTO institutions (title, city, district, telephone, fax, address)  VALUES ("hospital № 2", "Saint-Petersburg", "Moskovskiy", "88127777778", "88127777778", "pr. Veteranov h. 69");
+INSERT INTO institutions (title, city, district, telephone, fax, address)  VALUES ("hospital № 3", "Moscow", "Kirovskyi", "88127777778", "88127777778", "pr. Veteranov h. 69");
+INSERT INTO institutions (title, city, district, telephone, fax, address)  VALUES ("hospital № 4", "Moscow", "Moskovskiy", "88127777778", "88127777778", "pr. Veteranov h. 69");
+INSERT INTO institutions (title, city, district, telephone, fax, address)  VALUES ("hospital № 5", "Some city", "Kirovskyi", "88127777777", "88127777777", "pr. Veteranov h. 69");
+INSERT INTO institutions (title, city, district, telephone, fax, address)  VALUES ("hospital № 6", "Some city", "Moskovskiy", "88127777777", "88127777777", "pr. Veteranov h. 69");
+INSERT INTO institutions (title, city, district, telephone, fax, address)  VALUES ("hospital № 7", "Saint-Petersburg", "Kirovskyi", "88127777777", "88127777777", "pr. Veteranov h. 869");
 
 INSERT INTO feedbacks (user, feedback_text, created,institution_id) VALUES ((SELECT user FROM citizens WHERE policy = "1234567891234566"), "bad institution!", now(), (SELECT id FROM institutions WHERE title = "hospital № 1"));
 
@@ -162,11 +170,14 @@ INSERT INTO representatives (user, institution_id, approved) VALUES ((SELECT id 
 
 INSERT INTO users(login, full_name, email, password, user_type) VALUES ("doctor", "doctor", "doctor@mail.com", SHA1("pass"), "DOCTOR");  
 INSERT INTO users(login, full_name, email, password, user_type) VALUES ("doctor1", "doctor1", "doctor1@mail.com", SHA1("pass"), "DOCTOR");           
+INSERT INTO users(login, full_name, email, password, user_type) VALUES ("doctor2", "doctor2", "doctor2@mail.com", SHA1("pass"), "DOCTOR");      
 INSERT INTO  doctors (user, position, summary, institution_id, approved) VALUES ((SELECT id FROM users WHERE login = "doctor"), "therapist", "good doctor", (SELECT id FROM institutions WHERE title = "hospital № 1"), 1);
 INSERT INTO  doctors (user, position, summary, institution_id, approved) VALUES ((SELECT id FROM users WHERE login = "doctor1"), "therapist", "good doctor", (SELECT id FROM institutions WHERE title = "hospital № 2"), 1);
+INSERT INTO  doctors (user, position, summary, institution_id, approved) VALUES ((SELECT id FROM users WHERE login = "doctor2"), "therapist", "good doctor", (SELECT id FROM institutions WHERE title = "hospital № 1"), 1);
 
 INSERT INTO tickets (user, child, institution_id, doctor, ticket_date)  VALUES ((SELECT user FROM citizens WHERE policy = "1234567891234566"), null, (SELECT id FROM institutions WHERE title = "hospital № 1"), (SELECT id FROM users WHERE login = "doctor"), now());
 INSERT INTO tickets (user, child, institution_id, doctor, ticket_date)  VALUES ((SELECT user FROM citizens WHERE policy = "1234567891234566"), (SELECT id FROM childs WHERE birth_certificate = "IJ12293948"), (SELECT id FROM institutions WHERE title = "hospital № 1"), (SELECT id FROM users WHERE login = "doctor"), now());
-INSERT INTO tickets (user, child, institution_id, doctor, ticket_date)  VALUES ((SELECT user FROM citizens WHERE policy = "1234567891234566"), (SELECT id FROM childs WHERE birth_certificate = "IJ12293948"), (SELECT id FROM institutions WHERE title = "hospital № 1"), (SELECT id FROM users WHERE login = "doctor"), now() + INTERVAL 1 MONTH);
+INSERT INTO tickets (user, child, institution_id, doctor, ticket_date)  VALUES ((SELECT user FROM citizens WHERE policy = "1234567891234566"), (SELECT id FROM childs WHERE birth_certificate = "IJ12293948"), (SELECT id FROM institutions WHERE title = "hospital № 1"), (SELECT id FROM users WHERE login = "doctor"), now());
+INSERT INTO tickets (user, child, institution_id, doctor, ticket_date, visited, summary)  VALUES ((SELECT user FROM citizens WHERE policy = "1234567891234566"), (SELECT id FROM childs WHERE birth_certificate = "IJ12293948"), (SELECT id FROM institutions WHERE title = "hospital № 1"), (SELECT id FROM users WHERE login = "doctor"), now(), 1, "good!");
 
 INSERT INTO notifications (user, notification, created) VALUES ((SELECT user FROM citizens WHERE policy = "1234567891234566"), "The ticket was canceled!", now());

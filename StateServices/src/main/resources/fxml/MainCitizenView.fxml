@@ -102,6 +102,6 @@
       <Label fx:id="emailLabel" layoutX="474.0" layoutY="18.0" text="email" />
       <Label layoutX="14.0" layoutY="18.0" text="Login:" />
       <Button fx:id="addChildButton" layoutX="670.0" layoutY="6.0" mnemonicParsing="false" onMouseClicked="#onClickAddChildButton" text="Add child" />
-      <Button fx:id="makeEduRequestButton" layoutX="671.0" layoutY="35.0" mnemonicParsing="false" text="Make educational request" />
+      <Button fx:id="makeEduRequestButton" layoutX="671.0" layoutY="35.0" mnemonicParsing="false" onMouseClicked="#onClickMakeEduRequestButton" text="Make educational request" />
    </children>
 </AnchorPane>

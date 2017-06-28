@@ -41,14 +41,7 @@ import services.stateservices.facade.Struct;
  *
  * @author Masha
  */
-public class MainMedicalRepresentativeViewController {
-    private Facade facade = Main.facade;
-    private String user;
-    private int institution;
-    @FXML
-    private Button addFeedbackButton;
-    @FXML
-    private Button updateButton;
+public class MainMedicalRepresentativeViewController extends InstitutionsController {
     @FXML
     private Button addDoctorButton;
     @FXML
@@ -57,8 +50,6 @@ public class MainMedicalRepresentativeViewController {
     private Label nameFullColumn;
     @FXML
     private Label emailLabel;
-    @FXML
-    private Tab informationTab;
     @FXML
     private TextField infoTitleField;
     @FXML
@@ -76,53 +67,10 @@ public class MainMedicalRepresentativeViewController {
     @FXML
     private Tab requestsTab;
     @FXML
-    private TableView<Struct> doctorsTable;
-    @FXML
-    private TableColumn<Struct, String> doctorFullNameColumn;
-    @FXML
-    private TableColumn<Struct, String> doctorEmailColumn;
-    @FXML
-    private TableColumn<Struct, String> doctorPositionColumn;
-    @FXML
-    private TableColumn<Struct, String> doctorSummaryColumn;
-    @FXML
-    private TableColumn<Struct, String> doctorActionColumn;
-    @FXML
-    private TableView<Struct> feedbackTable;
-    @FXML
-    private TableColumn<Struct, String> feedbackDateColumn;
-    @FXML
-    private TableColumn<Struct, String> feedbackUserColumn;
-    @FXML
-    private TableColumn<Struct, String> feedbackToUserColumn;
-    @FXML
-    private TableColumn<Struct, String> feedbackTextColumn;
-    @FXML
-    private TableColumn<Struct, String> feedbackActionColumn;
-    @FXML
-    private Tab ticketTab;
-    @FXML
-    private TableView<Struct> ticketTable;
-    @FXML
-    private TableColumn<Struct, String> ticketDateColumn;
-    @FXML
-    private TableColumn<Struct, String> ticketDoctorColumn;
-    @FXML
-    private TableColumn<Struct, String> ticketCitizenColumn;
-    @FXML
-    private TableColumn<Struct, String> ticketChildColumn;
-    @FXML
-    private TableColumn<Struct, String> ticketVisitedColumn;
-    @FXML
-    private TableColumn<Struct, String> ticketSummary;
-    @FXML
-    private TableColumn<Struct, String> ticketActionColumn;
-    @FXML
-    private Button signOutButton;
-    @FXML
     private Button removeTicketsButton;
     
     public void setup(String user, int institution) {
+        this.isEdu = false;
         this.user = user;
         this.institution = institution;
         userLabel.setText(this.user);
@@ -141,8 +89,8 @@ public class MainMedicalRepresentativeViewController {
         onClickUpdateButton();
     }
 
-        @FXML
-    private void onClickUpdateButton() {
+    @FXML
+    public void onClickUpdateButton() {
         updateTicketsTable();
         updateFeedbackTable();
         updateDoctorsTable();
@@ -155,53 +103,14 @@ public class MainMedicalRepresentativeViewController {
         infoFaxField.setText(facade.getMedicalInstitutionFax(institution));
     }
 
-    private void updateDoctorsTable() {
-        ObservableList<Struct> doctors = null;
-        try {
-            doctors = FXCollections.observableArrayList(facade.getAllDoctorsForInstitution(institution));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return;
-        }
-        doctorsTable.setItems(doctors);
-    }
-
-    private void updateTicketsTable() {
-        ObservableList<Struct> tickets = null;
-        try {
-            tickets = FXCollections.observableArrayList(facade.getTicketsForMedicalInstitution(institution));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return;
-        }
-        ticketTable.setItems(tickets);
-    }
-
-    private void updateFeedbackTable() {
-        ObservableList<Struct> feedbacks = null;
-        try {
-            feedbacks = FXCollections.observableArrayList(facade.getAllFeedbacksForInstitution(institution, false));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return;
-        }
-        feedbackTable.setItems(feedbacks);
-    }
-
     @FXML
     private void onClickSignOutButton() {
         facade.signOut(user);
         Main.showSignInView();
     }
 
-    private void setUpTicketsTable() {
-        ticketDateColumn.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().get("date")));
-        ticketCitizenColumn.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().get("citizen")));
-        ticketDoctorColumn.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().get("doctor")));
-        ticketChildColumn.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().get("child")));
-        ticketVisitedColumn.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().get("visited")));
-        ticketSummary.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().get("summary")));
-
+    @Override
+    protected void addButtonsToTicketTable() {
         ticketActionColumn.setCellValueFactory(new PropertyValueFactory<>("DUMMY"));
 
         Callback<TableColumn<Struct, String>, TableCell<Struct, String>> cellFactory
@@ -272,81 +181,8 @@ public class MainMedicalRepresentativeViewController {
 
         ticketActionColumn.setCellFactory(cellFactory);
     }
-
-    private void setUpFeedbackTable() {
-        feedbackDateColumn.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().get("date")));
-        feedbackUserColumn.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().get("user")));
-        feedbackToUserColumn.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().get("toUser")));
-        feedbackTextColumn.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().get("text")));
-
-        feedbackActionColumn.setCellValueFactory(new PropertyValueFactory<>("DUMMY"));
-
-        Callback<TableColumn<Struct, String>, TableCell<Struct, String>> cellFactory;
-        cellFactory = new Callback<TableColumn<Struct, String>, TableCell<Struct, String>>() {
-            @Override
-            public TableCell call(final TableColumn<Struct, String> param) {
-                final TableCell<Struct, String> cell;
-                cell = new TableCell<Struct, String>() {
-
-                    final Button btnAddFeedback = new Button("Add feedback");
-                    FlowPane pane = new FlowPane();
-
-                    @Override
-                    public void updateItem(String item, boolean empty) {
-                        super.updateItem(item, empty);
-                        pane.getChildren().clear();
-                        int index = getIndex();
-                        if (index == -1 || getTableView().getItems().size() <= index) {
-                            setGraphic(null);
-                            setText(null);
-                            return;
-                        }
-                        Struct fields = getTableView().getItems().get(index);
-                        if (empty || fields.get("userLogin").equals(user)) {
-                            setGraphic(null);
-                            setText(null);
-                        } else {
-                            btnAddFeedback.setOnAction(event -> {
-                                String loginUserTo = fields.get("userLogin");
-                                TextInputDialog dialog = new TextInputDialog();
-                                dialog.setTitle("Enter feedback text");
-                                dialog.setHeaderText("Enter feedback text");
-
-                                Optional<String> result = dialog.showAndWait();
-                                if (!result.isPresent()) {
-                                    return;
-                                }
-
-                                boolean ret = facade.addFeedbackByRepresentative(user, institution, result.get(), loginUserTo);
-                                if (ret) {
-                                    onClickUpdateButton();
-                                } else {
-                                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                                    alert.setTitle("Error");
-                                    alert.setHeaderText("Error occured during saving feedback!");
-                                    alert.showAndWait();
-                                }
-                                loginUserTo = "";
-                            });
-                            pane.getChildren().add(btnAddFeedback);
-                            setGraphic(pane);
-                            setText(null);
-                        }
-                    }
-                };
-                return cell;
-            }
-        };
-
-        feedbackActionColumn.setCellFactory(cellFactory);
-    }
-
-    private void setUpDoctorsTable() {
-        doctorFullNameColumn.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().get("fullName")));
-        doctorEmailColumn.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().get("email")));
-        doctorPositionColumn.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().get("position")));
-        doctorSummaryColumn.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().get("summary")));
-
+    
+    protected void addButtonsToDoctorTable() {
         doctorActionColumn.setCellValueFactory(new PropertyValueFactory<>("DUMMY"));
 
         Callback<TableColumn<Struct, String>, TableCell<Struct, String>> cellFactory;
@@ -495,7 +331,7 @@ public class MainMedicalRepresentativeViewController {
 
         doctorActionColumn.setCellFactory(cellFactory);
     }
-
+    
     @FXML
     private void onClickInfoSaveChanges(MouseEvent event) {
         String title = infoTitleField.getText();
@@ -550,17 +386,17 @@ public class MainMedicalRepresentativeViewController {
         summary.setPromptText("Summary");
 
         gridPane.add(new Label("Full name:"), 0, 0);
-        gridPane.add(fullName, 0, 0);
+        gridPane.add(fullName, 1, 0);
         gridPane.add(new Label("Login:"), 0, 1);
-        gridPane.add(login, 0, 1);
+        gridPane.add(login, 1, 1);
         gridPane.add(new Label("Email:"), 0, 2);
-        gridPane.add(email, 0, 2);
+        gridPane.add(email, 1, 2);
         gridPane.add(new Label("Password:"), 0, 3);
-        gridPane.add(password, 0, 3);
+        gridPane.add(password, 1, 3);
         gridPane.add(new Label("Position:"), 0, 4);
-        gridPane.add(position, 0, 4);
+        gridPane.add(position, 1, 4);
         gridPane.add(new Label("Summary:"), 0, 5);
-        gridPane.add(summary, 0, 5);
+        gridPane.add(summary, 1, 5);
 
         dialog.getDialogPane().setContent(gridPane);
 
@@ -603,30 +439,6 @@ public class MainMedicalRepresentativeViewController {
             }
         });
     }
-
-    @FXML
-    private void onClickAddFeedback(MouseEvent event) {
-        TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Enter feedback text");
-        dialog.setHeaderText("Enter feedback text");
-
-        Optional<String> result = dialog.showAndWait();
-        if (!result.isPresent()) {
-            return;
-        }
-
-        boolean ret = facade.addFeedbackByRepresentative(user, institution, result.get(), "");
-        if (ret) {
-            onClickUpdateButton();
-        } else {
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Error");
-            alert.setHeaderText("Error occured during saving feedback!");
-            alert.showAndWait();
-        }
-    }
-
-
 
     @FXML
     private void onClickRemoveTicketsButton(MouseEvent event) {

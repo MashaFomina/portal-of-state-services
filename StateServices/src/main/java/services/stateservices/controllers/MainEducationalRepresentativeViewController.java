@@ -41,23 +41,7 @@ import javafx.scene.layout.GridPane;
  *
  * @author Masha
  */
-public class MainEducationalRepresentativeViewController {
-
-    private Facade facade = Main.facade;
-    private String user;
-    private int institution;
-    @FXML
-    private Button signOutButton;
-    @FXML
-    private Tab informationTab;
-    @FXML
-    private TableView<Struct> seatsTable;
-    @FXML
-    private TableColumn<Struct, String> seatsClassColumn;
-    @FXML
-    private TableColumn<Struct, String> seatsTotalColumn;
-    @FXML
-    private TableColumn<Struct, String> freeSeatsColumn;
+public class MainEducationalRepresentativeViewController extends InstitutionsController {
     @FXML
     private TextField infoTitleField;
     @FXML
@@ -91,18 +75,6 @@ public class MainEducationalRepresentativeViewController {
     @FXML
     private TableColumn<Struct, String> requestActionColumn;
     @FXML
-    private TableView<Struct> feedbackTable;
-    @FXML
-    private TableColumn<Struct, String> feedbackDateColumn;
-    @FXML
-    private TableColumn<Struct, String> feedbackUserColumn;
-    @FXML
-    private TableColumn<Struct, String> feedbackToUserColumn;
-    @FXML
-    private TableColumn<Struct, String> feedbackTextColumn;
-    @FXML
-    private TableColumn<Struct, String> feedbackActionColumn;
-    @FXML
     private Label emailLabel;
     @FXML
     private Label nameFullColumn;
@@ -110,12 +82,9 @@ public class MainEducationalRepresentativeViewController {
     private Label userLabel;
     @FXML
     private Button changeSeatsButton;
-    @FXML
-    private Button updateButton;
-    @FXML
-    private Button addFeedbackButton;
 
     public void setup(String user, int institution) {
+        this.isEdu = true;
         this.user = user;
         this.institution = institution;
         userLabel.setText(this.user);
@@ -135,7 +104,7 @@ public class MainEducationalRepresentativeViewController {
     }
 
     @FXML
-    private void onClickUpdateButton() {
+    public void onClickUpdateButton() {
         updateSeatsTable();
         updateFeedbackTable();
         updateEduRequestsTable();
@@ -159,106 +128,10 @@ public class MainEducationalRepresentativeViewController {
         requestTable.setItems(requests);
     }
 
-    private void updateSeatsTable() {
-        ObservableList<Struct> seats = null;
-        try {
-            seats = FXCollections.observableArrayList(facade.getSeatsForEducationalInstitution(institution));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return;
-        }
-        seatsTable.setItems(seats);
-    }
-
-    private void updateFeedbackTable() {
-        ObservableList<Struct> feedbacks = null;
-        try {
-            feedbacks = FXCollections.observableArrayList(facade.getAllFeedbacksForInstitution(institution, true));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return;
-        }
-        feedbackTable.setItems(feedbacks);
-    }
-
     @FXML
     private void onClickSignOutButton() {
         facade.signOut(user);
         Main.showSignInView();
-    }
-
-    private void setUpSeatsTable() {
-        seatsClassColumn.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().get("classNumber")));
-        seatsTotalColumn.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().get("seats")));
-        freeSeatsColumn.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().get("freeSeats")));
-    }
-
-    private void setUpFeedbackTable() {
-        feedbackDateColumn.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().get("date")));
-        feedbackUserColumn.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().get("user")));
-        feedbackToUserColumn.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().get("toUser")));
-        feedbackTextColumn.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().get("text")));
-
-        feedbackActionColumn.setCellValueFactory(new PropertyValueFactory<>("DUMMY"));
-
-        Callback<TableColumn<Struct, String>, TableCell<Struct, String>> cellFactory;
-        cellFactory = new Callback<TableColumn<Struct, String>, TableCell<Struct, String>>() {
-            @Override
-            public TableCell call(final TableColumn<Struct, String> param) {
-                final TableCell<Struct, String> cell;
-                cell = new TableCell<Struct, String>() {
-
-                    final Button btnAddFeedback = new Button("Add feedback");
-                    FlowPane pane = new FlowPane();
-
-                    @Override
-                    public void updateItem(String item, boolean empty) {
-                        super.updateItem(item, empty);
-                        pane.getChildren().clear();
-                        int index = getIndex();
-                        if (index == -1 || getTableView().getItems().size() <= index) {
-                            setGraphic(null);
-                            setText(null);
-                            return;
-                        }
-                        Struct fields = getTableView().getItems().get(index);
-                        if (empty || fields.get("userLogin").equals(user)) {
-                            setGraphic(null);
-                            setText(null);
-                        } else {
-                            btnAddFeedback.setOnAction(event -> {
-                                String loginUserTo = fields.get("userLogin");
-                                TextInputDialog dialog = new TextInputDialog();
-                                dialog.setTitle("Enter feedback text");
-                                dialog.setHeaderText("Enter feedback text");
-
-                                Optional<String> result = dialog.showAndWait();
-                                if (!result.isPresent()) {
-                                    return;
-                                }
-
-                                boolean ret = facade.addFeedbackByRepresentative(user, institution, result.get(), loginUserTo);
-                                if (ret) {
-                                    onClickUpdateButton();
-                                } else {
-                                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                                    alert.setTitle("Error");
-                                    alert.setHeaderText("Error occured during saving feedback!");
-                                    alert.showAndWait();
-                                }
-                                loginUserTo = "";
-                            });
-                            pane.getChildren().add(btnAddFeedback);
-                            setGraphic(pane);
-                            setText(null);
-                        }
-                    }
-                };
-                return cell;
-            }
-        };
-
-        feedbackActionColumn.setCellFactory(cellFactory);
     }
 
     private void setUpEduRequestTable() {
@@ -470,27 +343,5 @@ public class MainEducationalRepresentativeViewController {
                 alert.showAndWait();
             }
         });
-    }
-
-    @FXML
-    private void onClickAddFeedback(MouseEvent event) {
-        TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Enter feedback text");
-        dialog.setHeaderText("Enter feedback text");
-
-        Optional<String> result = dialog.showAndWait();
-        if (!result.isPresent()) {
-            return;
-        }
-
-        boolean ret = facade.addFeedbackByRepresentative(user, institution, result.get(), "");
-        if (ret) {
-            onClickUpdateButton();
-        } else {
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Error");
-            alert.setHeaderText("Error occured during saving feedback!");
-            alert.showAndWait();
-        }
     }
 }

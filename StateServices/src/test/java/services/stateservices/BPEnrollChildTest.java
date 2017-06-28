@@ -233,10 +233,10 @@ public class BPEnrollChildTest extends TestCase {
     
     @Test
     public void testNoFreeSeats() throws Exception {
-        educationalRepresentative.setSeats(1, 0, 0);
+        educationalRepresentative.setSeats(1, 10, 10);
         assertTrue(institution1.getFreeSeats(1) == 0);
-        institution2.setSeats(1, 0, 5);
-        assertTrue(institution2.getFreeSeats(1) == -5);
+        institution2.setSeats(1, 5, 5);
+        assertTrue(institution2.getFreeSeats(1) == 0);
 
         Date birthDate = new Date(2015, 0, 14);
         String birthCertificate = "IJ1229394844";

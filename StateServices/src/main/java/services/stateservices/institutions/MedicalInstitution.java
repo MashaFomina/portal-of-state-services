@@ -76,11 +76,11 @@ public class MedicalInstitution extends Institution {
         return tickets;
     }
     
-    public Set<Ticket> getTickets(Doctor doctor) throws NoRightsException {
+    public List<Ticket> getTickets(Doctor doctor) throws NoRightsException {
         if (!doctor.getInstitution().equals(this)) {
             throw new NoRightsException("You have no ability to get tickets for doctor from other institution!");
         }
-        Set<Ticket> doctorTickets = new HashSet<>();
+        List<Ticket> doctorTickets = new ArrayList<>();
         Iterator<Ticket> i = tickets.iterator();
         Date currentDate = new Date();
         while (i.hasNext()) {
@@ -112,6 +112,15 @@ public class MedicalInstitution extends Institution {
             return true;
         }
         
+        return false;
+    }
+    
+    public boolean canAddFeedback(User user) {
+        for (Ticket t : tickets) {
+            if (t.getUser().equals(user) && t.isVisited()) {
+                return true;
+            }
+        }
         return false;
     }
 }

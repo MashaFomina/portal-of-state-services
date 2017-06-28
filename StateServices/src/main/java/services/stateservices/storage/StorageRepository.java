@@ -118,6 +118,44 @@ public class StorageRepository {
         }
         return null;
     }
+    
+    public List<EducationalInstitution> getEducationalInstitutions(String city, String district) {
+        try {
+            return educationalInstitutionMapper.findAllByDistrict(city, district);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+    
+    public List<String> getCities(boolean isEdu) {
+        List<String> cities = new ArrayList<>();
+        try {
+            cities = isEdu ? educationalInstitutionMapper.getCities() : medicalInstitutionMapper.getCities();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return cities;
+    }
+    
+    public List<String> getDistricts(String city, boolean isEdu) {
+        List<String> districts = new ArrayList<>();
+        try {
+            districts = isEdu ? educationalInstitutionMapper.getCityDistricts(city) : medicalInstitutionMapper.getCityDistricts(city);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return districts;
+    }
+    
+    public List<MedicalInstitution> getMedicalInstitutions(String city, String district) {
+        try {
+            return medicalInstitutionMapper.findAllByDistrict(city, district);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
         
     public MedicalInstitution addMedicalInstitution(String title, String city, String district, String telephone, String fax, String address) {
         try {

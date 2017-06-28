@@ -31,12 +31,8 @@ import services.stateservices.service.NotificationEmaiService;
 public class Main extends Application {
     private static Stage mainStage;
     public static Facade facade = new Facade();
-
-    /*private static Map<String, Stage> projectViews = new HashMap<>();
-    private static Map<String, Stage> userViews = new HashMap<>();
-    private static Map<Integer, Stage> milestoneViews = new HashMap<>();
-    private static Map<Integer, Stage> ticketViews = new HashMap<>();
-    private static Map<Integer, Stage> reportViews = new HashMap<>();*/
+    private static Stage stage;
+    //private static Map<String, Stage> stages = new HashMap<>();
     
     public static void main(String[] args) {
         /*NotificationEmaiService service = new NotificationEmaiService("mariyaaleksandrowna@yandex.ru", "Notification!");
@@ -162,6 +158,7 @@ public class Main extends Application {
         showSignInView();
 
         mainStage.show();
+        //stages.put("title", stage); // may be usefull fo statical content (information about institution)
     }
 
     public static void showSignInView() {
@@ -221,131 +218,51 @@ public class Main extends Application {
             e.printStackTrace();
         }
     }
-        
-    /*public static void showRegisterView() {
+    
+    public static void showEducationalInstitutionCitizenView(String user) {
         try {
-            String fxmlFile = "/fxml/RegisterView.fxml";
+            String fxmlFile = "/fxml/EducationalInstitutionCitizenView.fxml";
             FXMLLoader loader = new FXMLLoader();
             AnchorPane root = (AnchorPane) loader.load(Main.class.getClass().getResourceAsStream(fxmlFile));
-            Scene scene = new Scene(root, 341, 277);
-            mainStage.setScene(scene);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void showUserView(String user) {
-        if (userViews.containsKey(user)) {
-            userViews.get(user).toFront();
-            return;
-        }
-        try {
-            Stage stage = new Stage();
-            String fxmlFile = "/fxml/UserView.fxml";
-            FXMLLoader loader = new FXMLLoader();
-            AnchorPane root = (AnchorPane) loader.load(Main.class.getClass().getResourceAsStream(fxmlFile));
-            UserViewController uvc = loader.getController();
+            EducationalInstitutionCitizenViewController uvc = loader.getController();
             uvc.setup(user);
-            Scene scene = new Scene(root, 225, 130);
+            stage = new Stage();
+            Scene scene = new Scene(root);
             stage.setScene(scene);
-            stage.setTitle("User info");
+            stage.setTitle("Educational institutions information");
             stage.show();
-            stage.setOnCloseRequest(windowEvent -> userViews.remove(user));
-            userViews.put(user, stage);
+            mainStage.hide();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-
-    public static void showProjectView(String user, String project) {
-        if (projectViews.containsKey(project)) {
-            projectViews.get(project).toFront();
-            return;
-        }
+    
+   public static void showMedicalInstitutionCitizenView(String user) {
         try {
-            Stage stage = new Stage();
-            String fxmlFile = "/fxml/ProjectView.fxml";
+            String fxmlFile = "/fxml/MedicalInstitutionCitizenView.fxml";
             FXMLLoader loader = new FXMLLoader();
             AnchorPane root = (AnchorPane) loader.load(Main.class.getClass().getResourceAsStream(fxmlFile));
-            ProjectViewController uvc = loader.getController();
-            uvc.setup(user, project);
-            Scene scene = new Scene(root, 600, 600);
+            MedicalInstitutionCitizenViewController uvc = loader.getController();
+            uvc.setup(user);
+            stage = new Stage();
+            Scene scene = new Scene(root);
             stage.setScene(scene);
-            stage.setTitle("Project info");
+            stage.setTitle("Medical institutions information");
             stage.show();
-            stage.setOnCloseRequest(windowEvent -> projectViews.remove(project));
-            projectViews.put(project, stage);
+            mainStage.hide();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-
-    public static void showMilestoneView(String user, String project, Integer milestone) {
-        if (milestoneViews.containsKey(milestone)) {
-            milestoneViews.get(milestone).toFront();
-            return;
-        }
-        try {
-            Stage stage = new Stage();
-            String fxmlFile = "/fxml/MilestoneView.fxml";
-            FXMLLoader loader = new FXMLLoader();
-            AnchorPane root = (AnchorPane) loader.load(Main.class.getClass().getResourceAsStream(fxmlFile));
-            MilestoneViewController uvc = loader.getController();
-            uvc.setup(user, project, milestone);
-            Scene scene = new Scene(root, 320, 440);
-            stage.setScene(scene);
-            stage.setTitle("Milestone info");
-            stage.show();
-            stage.setOnCloseRequest(windowEvent -> milestoneViews.remove(milestone));
-            milestoneViews.put(milestone, stage);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void showTicketView(String user, String project, Integer ticket) {
-        if (ticketViews.containsKey(ticket)) {
-            ticketViews.get(ticket).toFront();
-            return;
-        }
-        try {
-            Stage stage = new Stage();
-            String fxmlFile = "/fxml/TicketView.fxml";
-            FXMLLoader loader = new FXMLLoader();
-            AnchorPane root = (AnchorPane) loader.load(Main.class.getClass().getResourceAsStream(fxmlFile));
-            TicketViewController uvc = loader.getController();
-            uvc.setup(user, project, ticket);
-            Scene scene = new Scene(root, 600, 400);
-            stage.setScene(scene);
-            stage.setTitle("Ticket info");
-            stage.show();
-            stage.setOnCloseRequest(windowEvent -> ticketViews.remove(ticket));
-            ticketViews.put(ticket, stage);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void showReportView(String user, String project, Integer report) {
-        if (reportViews.containsKey(report)) {
-            reportViews.get(report).toFront();
-            return;
-        }
-        try {
-            Stage stage = new Stage();
-            String fxmlFile = "/fxml/BugReportView.fxml";
-            FXMLLoader loader = new FXMLLoader();
-            AnchorPane root = (AnchorPane) loader.load(Main.class.getClass().getResourceAsStream(fxmlFile));
-            BugReportViewController uvc = loader.getController();
-            uvc.setup(user, project, report);
-            Scene scene = new Scene(root, 600, 250);
-            stage.setScene(scene);
-            stage.setTitle("Report info");
-            stage.show();
-            stage.setOnCloseRequest(windowEvent -> reportViews.remove(report));
-            reportViews.put(report, stage);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }*/
+   
+   public static void showMainStage() {
+       mainStage.show();
+   }
+   
+   public static void closeStage() {
+       if (stage != null) {
+           stage.close();
+           stage = null;
+       }
+   }
 }

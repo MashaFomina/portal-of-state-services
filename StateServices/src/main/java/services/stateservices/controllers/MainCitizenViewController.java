@@ -33,6 +33,7 @@ import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.util.Callback; 
 import javafx.scene.layout.FlowPane;
+import java.util.List;
 
 /**
  * FXML Controller class
@@ -43,9 +44,7 @@ public class MainCitizenViewController {
 
     private String user;
     private Facade facade = Main.facade;
-
-    DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    DateFormat dateFormatBirthDate = new SimpleDateFormat("yyyy-MM-dd");
+    List<Struct> userChilds = new ArrayList<>();
 
     @FXML private Label userLabel;
     @FXML private Button updateButton;
@@ -130,18 +129,29 @@ public class MainCitizenViewController {
         birthDatetLabel.setText(facade.getCitizenBirthDate(user));
         emailLabel.setText(facade.getUserEmail(user));
         nameFullColumn.setText(facade.getUserFullName(user));
-        /*userLabel.setOnMouseClicked(mouseEvent -> {
-            try {
-                //Main.showUserView(user);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });*/
         setUpNotificationTable();
         setUpChildTable();
         setUpTicketTable();
         setUpEduRequestTable();
         onClickUpdateButton();
+        
+        if (userChilds == null || userChilds != null && userChilds.isEmpty()) {
+            makeEduRequestButton.setVisible(false);
+        }
+        makeEduRequestButton.setOnMouseClicked(mouseEvent -> {
+            try {
+                Main.showEducationalInstitutionCitizenView(user);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+        takeTicketButton.setOnMouseClicked(mouseEvent -> {
+            try {
+                Main.showMedicalInstitutionCitizenView(user);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
 
 
@@ -157,6 +167,12 @@ public class MainCitizenViewController {
         updateChildTable();
         updateTicketTable();
         updateEduRequestsTable();
+        if (userChilds == null || userChilds != null && userChilds.isEmpty()) {
+            makeEduRequestButton.setVisible(false);
+        }
+        else {
+            makeEduRequestButton.setVisible(true);
+        }
     }
 
     @FXML
@@ -494,7 +510,8 @@ public class MainCitizenViewController {
     private void updateChildTable() {
         ObservableList<Struct> childs = null;
         try {
-            childs = FXCollections.observableArrayList(facade.getAllChildsForUser(user));
+            userChilds = facade.getAllChildsForUser(user);
+            childs = FXCollections.observableArrayList(userChilds);
         } catch (Exception e) {
             e.printStackTrace();
             return;
@@ -526,5 +543,9 @@ public class MainCitizenViewController {
 
     @FXML
     private void onClickTakeTicketButton(MouseEvent event) {
+    }
+
+    @FXML
+    private void onClickMakeEduRequestButton(MouseEvent event) {
     }
 }
