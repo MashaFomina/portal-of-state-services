@@ -147,7 +147,7 @@ public class Facade implements FacadeInterface {
     public boolean canAddFeedbackToMedicalInstitution (String login, int institutionId) {
         User user = repository.getUser(login);
         MedicalInstitution institution = repository.getMedicalInstitution(institutionId);
-        return institution.canAddFeedback(user);
+        return repository.canAddFeedbackToMedicalInstitution(user, institution);
     }
     
     public List<Struct> getTicketsForMedicalInstitution(int id, String doctorLogin)
@@ -166,7 +166,6 @@ public class Facade implements FacadeInterface {
             struct.add("date", dateFormat.format(t.getDate()));
             struct.add("institution", t.getInstitution().getTitle());
             struct.add("doctor", t.getDoctor().getFullName() + " (" + t.getDoctor().getPosition() + ")");
-            struct.add("doctorLogin", t.getDoctor().getLogin());
             struct.add("child", t.getChild() != null ? t.getChild().getFullName() : "");
             struct.add("citizen", t.getUser() != null ? t.getUser().getFullName() : "");
             struct.add("visited", t.isVisited() ? "yes" : "no");
@@ -412,6 +411,44 @@ public class Facade implements FacadeInterface {
         }
         return result;
     }     
+    
+    public boolean refuseTicketByCitizen(String login, String ticketId) {
+        boolean result = false;
+        Citizen user = repository.getCitizen(login);
+        if (user == null) return result;
+        
+        try {
+            Ticket ticket = repository.getTicket(new Integer(ticketId));
+            user.cancelTicket(ticket);
+            repository.updateUser(user);
+            result = true;
+        } catch (NoRightsException | SQLException ex) {
+            Logger.getLogger(Facade.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return result;
+    }     
+    
+    public boolean takeTicket(String login, String ticketId, int childId) {
+        boolean result = false;
+        Citizen user = repository.getCitizen(login);
+        if (user == null) return result;
+        
+        try {
+            Ticket ticket = repository.getTicket(new Integer(ticketId));
+            if (childId < 1) {
+                user.acceptTicket(ticket);
+            }
+            else {
+                Child child = repository.getChild(childId);
+                user.acceptTicketForChild(ticket, child);
+            }
+            repository.updateUser(user);
+            result = true;
+        } catch (NoRightsException | SQLException ex) {
+            Logger.getLogger(Facade.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return result;
+    }
     
     public boolean acceptEduRequestByInstitution (String login, String requestId) {
         boolean result = false;

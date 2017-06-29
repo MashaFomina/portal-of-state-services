@@ -42,7 +42,7 @@ public class EducationalInstitutionMapper extends InstitutionMapper implements M
         if (repository == null)
             repository = StorageRepository.getInstance();
     }
- 
+    
     public List<EducationalInstitution> findAllByDistrict(String city, String district) throws SQLException {
         List<EducationalInstitution> all = new ArrayList<>();
 

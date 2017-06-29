@@ -15,6 +15,7 @@ import services.stateservices.entities.Ticket;
 import org.apache.commons.lang.time.DateUtils;
 import services.stateservices.entities.Feedback;
 import services.stateservices.errors.AlreadyExistsException;
+import services.stateservices.service.NotificationEmaiService;
 
 public class MedicalRepresentative extends User implements InstitutionRepresentative {
     private MedicalInstitution institution;
@@ -93,7 +94,10 @@ public class MedicalRepresentative extends User implements InstitutionRepresenta
         
         Citizen user = ticket.getUser();
         if (user != null) {
-            user.addNotification("Sorry, but your ticket to " + ticket.getDoctor().getFullName() + " in " + institution.getTitle() + " on " + ticket.getDate() + " was canceled!");
+            String notification = "Sorry, but your ticket to " + ticket.getDoctor().getFullName() + " in " + institution.getTitle() + " on " + ticket.getDate() + " was canceled!";
+            user.addNotification(notification);
+            NotificationEmaiService service = new NotificationEmaiService(user.getEmail(), notification);
+            service.sendNotification();
             user.removeTicket(ticket);
         }
         institution.removeTicket(ticket);
@@ -123,8 +127,12 @@ public class MedicalRepresentative extends User implements InstitutionRepresenta
         if (!ticket.getDoctor().getInstitution().equals(institution)) {
             throw new NoRightsException("You have no rights to confirm visits of other institution!");
         }
-        if (ticket.getUser() != null)
-            ticket.getUser().addNotification("Now your can leave feedback about your visit to " + institution.getTitle());
+        if (ticket.getUser() != null) {
+            String notification = "Now your can leave feedback about your visit to " + institution.getTitle();
+            ticket.getUser().addNotification(notification);
+            NotificationEmaiService service = new NotificationEmaiService(ticket.getUser().getEmail(), notification);
+            service.sendNotification();
+        }
         ticket.setVisited(true, summary);
     }
     

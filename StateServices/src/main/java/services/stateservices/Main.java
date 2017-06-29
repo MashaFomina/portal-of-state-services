@@ -35,9 +35,6 @@ public class Main extends Application {
     //private static Map<String, Stage> stages = new HashMap<>();
     
     public static void main(String[] args) {
-        /*NotificationEmaiService service = new NotificationEmaiService("mariyaaleksandrowna@yandex.ru", "Notification!");
-        if (service.sendNotification()) System.out.println("Notification sent!");*/
-
         launch(args);
         /*StorageRepository repository = StorageRepository.getInstance();
         

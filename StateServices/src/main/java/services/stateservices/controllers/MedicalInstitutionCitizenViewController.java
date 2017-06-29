@@ -9,14 +9,21 @@ package services.stateservices.controllers;
 import java.net.URL;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.SingleSelectionModel;
 import javafx.scene.control.Tab;
@@ -24,10 +31,12 @@ import javafx.scene.control.TabPane;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.GridPane;
 import javafx.util.Callback;
 import javafx.util.StringConverter;
 import services.stateservices.facade.Struct;
@@ -39,6 +48,7 @@ import services.stateservices.facade.Struct;
  */
 public class MedicalInstitutionCitizenViewController extends InstitutionsController {       
     public void setup(String user) {
+        canAddFeedbacks = false;
         this.user = user;
         this.isEdu = false;
         setupCities();
@@ -61,11 +71,10 @@ public class MedicalInstitutionCitizenViewController extends InstitutionsControl
             setupDoctorsSelectBoxs();
         }
         else {
-            canAddFeedbacks = false;
-            disableTabs();
+            disableTabs(null);
         }
         
-        if (institution > 0 && canAddFeedbacks == true) {
+        if (canAddFeedbacks == true) {
             addFeedbackButton.setVisible(true);
         }
         else {
@@ -74,41 +83,9 @@ public class MedicalInstitutionCitizenViewController extends InstitutionsControl
         
         updateInstitutionTable();
     }
-
-    protected void setupDoctorsSelectBoxs() {
-        selectDoctor.getItems().clear();
-        selectDoctor.setItems(doctors);
-        selectDoctor.setConverter(new StringConverter<Struct>() {
-              @Override
-              public String toString(Struct struct) {
-                if (struct == null){
-                    return null;
-                } else {
-                    return struct.get("title");
-                }
-              }
-
-            @Override
-            public Struct fromString(String title) {
-                return null;
-            }
-        });
-        selectDoctor.setTooltip(new Tooltip("Select institution"));
-        selectDoctor.getSelectionModel().selectedIndexProperty().addListener(
-                new ChangeListener<Number>() {
-                    @Override
-                    public void changed(ObservableValue ov, Number value, Number newValue) {
-                        if (!doctors.isEmpty() & newValue.intValue() >= 0) {
-                            Struct struct = institutions.get(newValue.intValue());
-                            doctor = struct.get("doctorLogin");
-                            selectDoctor.setPromptText(struct.get("fullName") + " (" + struct.get("position") + ")");
-                            onClickUpdateButton();
-                        }
-                    }
-        });
-    }
         
-    protected void addButtonsToTicketTable1() {
+    @Override
+    protected void addButtonsToTicketTable() {
         ticketActionColumn.setCellValueFactory(new PropertyValueFactory<>("DUMMY"));
 
         Callback<TableColumn<Struct, String>, TableCell<Struct, String>> cellFactory
@@ -117,8 +94,8 @@ public class MedicalInstitutionCitizenViewController extends InstitutionsControl
             public TableCell call(final TableColumn<Struct, String> param) {
                 final TableCell<Struct, String> cell = new TableCell<Struct, String>() {
 
-                    final Button btnCancel = new Button("Cancel");
-                    final Button btnVisited = new Button("Visited");
+                    final Button btnRefuse = new Button("Refuse");
+                    final Button btnTake = new Button("Take");
 
                     @Override
                     public void updateItem(String item, boolean empty) {
@@ -133,42 +110,104 @@ public class MedicalInstitutionCitizenViewController extends InstitutionsControl
                         if (empty) {
                             setGraphic(null);
                             setText(null);
-                        } else if (fields.get("canRefuse").equals("yes")) {
-                            btnCancel.setOnAction(event -> {
-                                boolean ret = facade.cancelTicketByRepresentative(user, fields.get("id"));
+                        } else if (fields.get("canRefuse").equals("yes") && fields.get("citizen").equals(facade.getUserFullName(user))) {
+                            btnRefuse.setOnAction(event -> {
+                                boolean ret = facade.refuseTicketByCitizen(user, fields.get("id"));
                                 if (ret) {
                                     onClickUpdateButton();
                                 } else {
                                     Alert alert = new Alert(Alert.AlertType.INFORMATION);
                                     alert.setTitle("Error");
-                                    alert.setHeaderText("Error ocured during cancelling ticket!");
+                                    alert.setHeaderText("Error ocured during refusing the ticket!");
                                     alert.showAndWait();
                                 }
                             });
-                            setGraphic(btnCancel);
+                            setGraphic(btnRefuse);
                             setText(null);
-                        } else if (fields.get("canSetVisited").equals("yes") && fields.get("visited").equals("no")) {
-                            btnVisited.setOnAction(event -> {
-                                TextInputDialog dialog = new TextInputDialog();
-                                dialog.setTitle("Enter visit summary");
-                                dialog.setHeaderText("Enter visit summary");
-
-                                Optional<String> result = dialog.showAndWait();
-                                if (!result.isPresent()) {
+                        } else if (fields.get("canRefuse").equals("yes") && fields.get("visited").equals("no")) {
+                            btnTake.setOnAction(event -> {
+                                if (userChilds.isEmpty()) {
+                                    facade.takeTicket(user, fields.get("id"), 0);
+                                    onClickUpdateButton();
                                     return;
                                 }
+                                Dialog<Integer> dialog = new Dialog<>();
+                                dialog.setTitle("Take ticket");
 
-                                boolean ret = facade.setTicketIsVisited(user, fields.get("id"), result.get());
-                                if (ret) {
-                                    onClickUpdateButton();
-                                } else {
-                                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                                    alert.setTitle("Error");
-                                    alert.setHeaderText("Error ocured during setting visited ticket!");
-                                    alert.showAndWait();
+                                // Set the button types.
+                                ButtonType buttonType = new ButtonType("OK", ButtonBar.ButtonData.OK_DONE);
+                                dialog.getDialogPane().getButtonTypes().addAll(buttonType, ButtonType.CANCEL);
+
+                                GridPane gridPane = new GridPane();
+                                gridPane.setHgap(10);
+                                gridPane.setVgap(10);
+                                gridPane.setPadding(new Insets(20, 150, 10, 10));
+
+                                ChoiceBox<Struct> select = new ChoiceBox<Struct>();
+                                ObservableList<Struct> names = null;
+                                try {
+                                    names = FXCollections.observableArrayList(userChilds);
+                                    Struct userStruct = new Struct();
+                                    userStruct.add("fullName", "me (" + facade.getUserFullName(user) + ")");
+                                    userStruct.add("id", "0");
+                                    names.add(userStruct);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                    return;
                                 }
+                                select.setItems(names);
+                                select.setConverter(new StringConverter<Struct>() {
+                                    @Override
+                                    public String toString(Struct struct) {
+                                        if (struct == null) {
+                                            return null;
+                                        } else {
+                                            return struct.get("fullName");
+                                        }
+                                    }
+
+                                    @Override
+                                    public Struct fromString(String fullName) {
+                                        return null;
+                                    }
+                                });
+                                select.setTooltip(new Tooltip("Select child or you"));
+
+                                gridPane.add(new Label("Select child or you:"), 0, 0);
+                                gridPane.add(select, 1, 0);
+
+                                dialog.getDialogPane().setContent(gridPane);
+
+                                // Request focus on the full name field by default.
+                                Platform.runLater(() -> select.requestFocus());
+
+                                // Convert the result when the login button is clicked.
+                                dialog.setResultConverter(dialogButton -> {
+                                    if (dialogButton == buttonType) {
+                                        return (select.getValue() != null) ? new Integer(select.getValue().get("id")) : 0;
+                                    }
+                                    return null;
+                                });
+
+                                Optional<Integer> result = dialog.showAndWait();
+
+                                result.ifPresent(childId -> {
+                                    boolean ret = facade.takeTicket(user, fields.get("id"), childId);
+                                    if (ret) {
+                                        onClickUpdateButton();
+                                        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                                        alert.setTitle("Ticket successfully taken");
+                                        alert.setHeaderText("Ticket successfully taken!");
+                                        alert.showAndWait();
+                                    } else {
+                                        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                                        alert.setTitle("Error");
+                                        alert.setHeaderText("Error during taking ticket!");
+                                        alert.showAndWait();
+                                    }
+                                });
                             });
-                            setGraphic(btnVisited);
+                            setGraphic(btnTake);
                             setText(null);
                         }
                     }
@@ -181,9 +220,9 @@ public class MedicalInstitutionCitizenViewController extends InstitutionsControl
     }
         
     @Override
-    protected void disableTabs() {
+    protected void disableTabs(Tab selected) {
         SingleSelectionModel<Tab> selectionModel = tabPane.getSelectionModel();
-        selectionModel.select(institutionsTab);
+        selectionModel.select(selected != null ? selected : institutionsTab);
         informationTab.setDisable(true);
         informationTab.getContent().setVisible(false);
         doctorsTab.setDisable(true);
@@ -193,9 +232,9 @@ public class MedicalInstitutionCitizenViewController extends InstitutionsControl
     }
     
     @Override
-    protected void enableTabs() {
+    protected void enableTabs(Tab selected) {
         SingleSelectionModel<Tab> selectionModel = tabPane.getSelectionModel();
-        selectionModel.select(informationTab);
+        selectionModel.select(selected != null ? selected : informationTab);
         informationTab.setDisable(false);
         informationTab.getContent().setVisible(true);
         doctorsTab.setDisable(false);

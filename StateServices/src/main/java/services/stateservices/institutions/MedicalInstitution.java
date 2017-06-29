@@ -10,6 +10,7 @@ import services.stateservices.entities.EduRequest;
 import services.stateservices.entities.Feedback;
 import services.stateservices.entities.Ticket;
 import services.stateservices.errors.NoRightsException;
+import services.stateservices.storage.StorageRepository;
 import services.stateservices.user.Doctor;
 import services.stateservices.user.Citizen;
 import services.stateservices.user.User;
@@ -85,7 +86,7 @@ public class MedicalInstitution extends Institution {
         Date currentDate = new Date();
         while (i.hasNext()) {
                 Ticket t = i.next(); // must be called before you can call i.remove()
-                if (t.getDoctor().equals(doctor) && t.getDate().after(currentDate)) {
+                if (t.getDoctor().equals(doctor)) { //&& t.getDate().after(currentDate)) {
                     doctorTickets.add(t);
                 }
         }
@@ -100,27 +101,23 @@ public class MedicalInstitution extends Institution {
         
         if (feedback.getUser() instanceof Citizen) {
             for (Ticket t : tickets) {
-                if (t.getUser().equals(feedback.getUser()) && t.isVisited()) {
+                if (t.getUser() != null && t.getUser().equals(feedback.getUser()) && t.isVisited()) {
                     feedbacks.add(feedback);
                     return true;
                 }
             }
-            throw new NoRightsException("Citizen must visit medical institution for adding feedbacks!");
+            boolean result = StorageRepository.getInstance().canAddFeedbackToMedicalInstitution(feedback.getUser(), this);
+            if (!result) throw new NoRightsException("Citizen must visit medical institution for adding feedbacks!");
+            else {
+                feedbacks.add(feedback);
+                return true;
+            }
         }
         else if (feedback.getUser() instanceof User) {
             feedbacks.add(feedback);
             return true;
         }
         
-        return false;
-    }
-    
-    public boolean canAddFeedback(User user) {
-        for (Ticket t : tickets) {
-            if (t.getUser().equals(user) && t.isVisited()) {
-                return true;
-            }
-        }
         return false;
     }
 }

@@ -43,6 +43,20 @@ public class MedicalInstitutionMapper extends InstitutionMapper implements Mappe
             feedbackMapper = new FeedbackMapper();
     }
     
+    public boolean canAddFeedback(int userId, int institutionId) throws SQLException {
+        String selectSQL = "SELECT count(*) as count FROM tickets WHERE user = ? and institution_id = ?;";
+        PreparedStatement selectStatement = connection.prepareStatement(selectSQL);
+        selectStatement.setInt(1, userId);
+        selectStatement.setInt(2, institutionId);
+        ResultSet rs = selectStatement.executeQuery();
+
+        if (rs.next() && rs.getInt("count") > 0) {
+            return true;
+        }
+        selectStatement.close(); 
+        return false;
+    }
+        
     public List<MedicalInstitution> findAllByDistrict(String city, String district) throws SQLException {
         List<MedicalInstitution> all = new ArrayList<>();
 

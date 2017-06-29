@@ -258,14 +258,14 @@ public abstract class InstitutionsController {
                         if (!institutions.isEmpty() & newValue.intValue() >= 0) {
                             Struct struct = institutions.get(newValue.intValue());
                             institution = new Integer(struct.get("id"));
-                            setPrompts(struct.get("title"));
+                            setInstitutionsPrompts(struct.get("title"));
                             onClickUpdateButton();
                         }
                     }
         });
     }
     
-    protected void setPrompts(String title) {
+    protected void setInstitutionsPrompts(String title) {
         selectInstitution.setPromptText(title);
         if (selectInstitution1 != null) selectInstitution1.setPromptText(title);
         if (selectInstitution2 != null) selectInstitution2.setPromptText(title);
@@ -287,8 +287,70 @@ public abstract class InstitutionsController {
         doctorPositionColumn.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().get("position")));
         doctorSummaryColumn.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().get("summary")));
         addButtonsToDoctorTable();
+        if (selectDoctor != null) {
+            doctorFullNameColumn.setCellFactory(col -> {
+                return onClickDoctorAction();
+            });
+            doctorEmailColumn.setCellFactory(col -> {
+                return onClickDoctorAction();
+            });
+            doctorPositionColumn.setCellFactory(col -> {
+                return onClickDoctorAction();
+            });
+            doctorSummaryColumn.setCellFactory(col -> {
+                return onClickDoctorAction();
+            });
+        }
     }
     
+    protected TableCell<Struct, String> onClickDoctorAction() {
+        final TableCell<Struct, String> cell = new TableCell<>();
+        cell.textProperty().bind(cell.itemProperty());
+        cell.setOnMouseClicked(event -> {
+            if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2) {
+                Struct fields = cell.getTableView().getItems().get(cell.getIndex());
+                doctor = fields.get("login");
+                onClickUpdateButton();
+                if (selectDoctor != null) selectDoctor.setPromptText(fields.get("fullName") + " (" + fields.get("position") + ")");
+                enableTabs(ticketTab);
+            }
+        });
+        return cell;
+    }
+    
+    protected void setupDoctorsSelectBoxs() {
+        selectDoctor.getItems().clear();
+        selectDoctor.setItems(doctors);
+        selectDoctor.setConverter(new StringConverter<Struct>() {
+              @Override
+              public String toString(Struct struct) {
+                if (struct == null){
+                    return null;
+                } else {
+                    return struct.get("fullName") + " (" + struct.get("position") + ")";
+                }
+              }
+
+            @Override
+            public Struct fromString(String title) {
+                return null;
+            }
+        });
+        selectDoctor.setTooltip(new Tooltip("Select institution"));
+        selectDoctor.getSelectionModel().selectedIndexProperty().addListener(
+                new ChangeListener<Number>() {
+                    @Override
+                    public void changed(ObservableValue ov, Number value, Number newValue) {
+                        if (!doctors.isEmpty() & newValue.intValue() >= 0) {
+                            Struct struct = doctors.get(newValue.intValue());
+                            doctor = struct.get("login");
+                            selectDoctor.setPromptText(struct.get("fullName") + " (" + struct.get("position") + ")");
+                            onClickUpdateButton();
+                        }
+                    }
+        });
+    }
+        
     protected void addButtonsToDoctorTable() {}
         
     protected void updateTicketsTable() {
@@ -362,7 +424,7 @@ public abstract class InstitutionsController {
         }
         else {
             institutions = FXCollections.observableArrayList();
-            disableTabs();
+            disableTabs(null);
         }
         institutionTable.setItems(institutions);
     }
@@ -391,24 +453,26 @@ public abstract class InstitutionsController {
         cell.textProperty().bind(cell.itemProperty());
         cell.setOnMouseClicked(event -> {
             if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2) {
-                institution = new Integer(cell.getTableView().getItems().get(cell.getIndex()).get("id"));
+                Struct fields = cell.getTableView().getItems().get(cell.getIndex());
+                institution = new Integer(fields.get("id"));
                 onClickUpdateButton();
-                enableTabs();
+                setInstitutionsPrompts(fields.get("title"));
+                enableTabs(null);
             }
         });
         return cell;
     }
     
-    protected void disableTabs() {
+    protected void disableTabs(Tab selected) {
         SingleSelectionModel<Tab> selectionModel = tabPane.getSelectionModel();
-        selectionModel.select(institutionsTab);
+        selectionModel.select(selected != null ? selected : institutionsTab);
         informationTab.setDisable(true);
         informationTab.getContent().setVisible(false);
     }
     
-    protected void enableTabs() {
+    protected void enableTabs(Tab selected) {
         SingleSelectionModel<Tab> selectionModel = tabPane.getSelectionModel();
-        selectionModel.select(informationTab);
+        selectionModel.select(selected != null ? selected : informationTab);
         informationTab.setDisable(false);
         informationTab.getContent().setVisible(true);
     }
@@ -451,7 +515,7 @@ public abstract class InstitutionsController {
                         if (empty || fields.get("userLogin").equals(user)) {
                             setGraphic(null);
                             setText(null);
-                        } else {
+                        } else if (canAddFeedbacks) {
                             btnAddFeedback.setOnAction(event -> {
                                 String loginUserTo = fields.get("userLogin");
                                 TextInputDialog dialog = new TextInputDialog();

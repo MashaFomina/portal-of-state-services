@@ -138,6 +138,16 @@ public class StorageRepository {
         return cities;
     }
     
+    public boolean canAddFeedbackToMedicalInstitution(User user, MedicalInstitution institution) {
+        boolean result = false; //in local lists of institution are represented tickets during month, so we make new request to database to sure that count of tickets visited by user is more than zero
+        try {
+            result = medicalInstitutionMapper.canAddFeedback(user.getId(), institution.getId());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+    
     public List<String> getDistricts(String city, boolean isEdu) {
         List<String> districts = new ArrayList<>();
         try {
