@@ -97,9 +97,11 @@ public class MainEducationalRepresentativeViewController extends InstitutionsCon
         infoAddressField.setText(facade.getEducationalInstitutionAddress(institution));
         infoTelephoneField.setText(facade.getEducationalInstitutionTelephone(institution));
         infoFaxField.setText(facade.getEducationalInstitutionFax(institution));
+        
         setUpSeatsTable();
         setUpFeedbackTable();
         setUpEduRequestTable();
+        
         onClickUpdateButton();
     }
 
@@ -115,6 +117,10 @@ public class MainEducationalRepresentativeViewController extends InstitutionsCon
         infoAddressField.setText(facade.getEducationalInstitutionAddress(institution));
         infoTelephoneField.setText(facade.getEducationalInstitutionTelephone(institution));
         infoFaxField.setText(facade.getEducationalInstitutionFax(institution));
+        
+        InstitutionsController.setFocusRefresh(seatsTable);
+        InstitutionsController.setFocusRefresh(feedbackTable);
+        InstitutionsController.setFocusRefresh(requestTable);
     }
 
     private void updateEduRequestsTable() {

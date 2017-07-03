@@ -9,30 +9,38 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.Set;
+import services.stateservices.storage.StorageRepository;
 
 public class ChildMapper implements Mapper<Child> {
     private static Set<Child> childs = new HashSet<>();
+    private static StorageRepository repository = null;
     private static Connection connection;
 
     public ChildMapper() throws IOException, SQLException {
+        // it is used just for deleting child
+        if (repository == null)
+            repository = StorageRepository.getInstance();
+        
         if (connection == null)
             connection = Gateway.getInstance().getDataSource().getConnection();
     }
 
-    public List<Child> getForUser(int user) throws SQLException {
-        List<Child> all = new ArrayList<>();
+    public Map<String, Child> getForUser(int user) throws SQLException {
+        Map<String, Child> all = new HashMap<>();
 
         for (Child it : childs) {
             if (it.getParent().getId() == user)
-                all.add(it);
+                all.put(it.getBirthCertificate(), it);
         }
         
         return all;
     }
         
-    public List<Child> findAllForUser(int user) throws SQLException {
-        List<Child> all = new ArrayList<>();
+    public Map<String, Child> findAllForUser(int user) throws SQLException {
+        Map<String, Child> all = new HashMap<>();
 
         String selectSQL = "SELECT id FROM childs WHERE parent = ?;";
         PreparedStatement selectStatement = connection.prepareStatement(selectSQL);
@@ -43,7 +51,7 @@ public class ChildMapper implements Mapper<Child> {
         while (rs.next()) {
             child = findByID(rs.getInt("id"));
             if (child != null)
-                all.add(child);
+                all.put(child.getBirthCertificate(), child);
         }
 
         selectStatement.close();
@@ -121,21 +129,13 @@ public class ChildMapper implements Mapper<Child> {
     public void delete(Child child) throws SQLException {
         childs.remove(child);
 
-        String deleteSQL = "DELETE FROM edu_requests WHERE child = ?;";
+        repository.deleteEduRequestsForChild(child);
+        repository.cancelTicketsForChild(child);
+        
+        String deleteSQL = "DELETE FROM childs WHERE id = ? LIMIT 1;";
         PreparedStatement deleteStatement = connection.prepareStatement(deleteSQL);
         deleteStatement.setInt(1, child.getId());
-        deleteStatement.execute();
-        
-        deleteSQL = "DELETE FROM tickets WHERE child = ?;";
-        deleteStatement = connection.prepareStatement(deleteSQL);
-        deleteStatement.setInt(1, child.getId());
-        deleteStatement.execute();
-        
-        deleteSQL = "DELETE FROM childs WHERE id = ? LIMIT 1;";
-        deleteStatement = connection.prepareStatement(deleteSQL);
-        deleteStatement.setInt(1, child.getId());
-        deleteStatement.execute();
-        
+        deleteStatement.execute();     
         deleteStatement.close();
     }
         

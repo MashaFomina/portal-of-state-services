@@ -27,6 +27,7 @@ public class UserMapper implements UserMapperInterface<User> {
     private static EduRequestMapper eduRequestMapper;
     private static EducationalInstitutionMapper educationalInstitutionMapper;
     private static MedicalInstitutionMapper medicalInstitutionMapper;
+    private static FeedbackMapper feedbackMapper;
     
     private Map<User.UserType, String> selectSQLByLogin = new HashMap<User.UserType, String>(){{
        put(User.UserType.ADMINISTRATOR, "SELECT * FROM users WHERE user_type = 'ADMINISTRATOR' and login = ?;");
@@ -53,6 +54,8 @@ public class UserMapper implements UserMapperInterface<User> {
             ticketMapper = new TicketMapper();
         if (eduRequestMapper == null)
             eduRequestMapper = new EduRequestMapper();
+        if (feedbackMapper == null)
+            feedbackMapper = new FeedbackMapper();
         if (connection == null)
             connection = Gateway.getInstance().getDataSource().getConnection();
         if (this.educationalInstitutionMapper == null)
@@ -64,10 +67,11 @@ public class UserMapper implements UserMapperInterface<User> {
     @Override
     public User findByLogin(String login) throws SQLException {
         for (User it : users) {
-            if (it.getLogin().equals(login))
+            if (it.getLogin().equals(login)) {
+                arrangeUser(it);
                 return it;
+            }
         }
-
         // User not found, extract from database
         String userSelectStatement = "SELECT * FROM users WHERE login = ?;";
         PreparedStatement extractUserStatement = connection.prepareStatement(userSelectStatement);
@@ -99,7 +103,7 @@ public class UserMapper implements UserMapperInterface<User> {
                     newUser = formCitizen(rs1);
                     break;
                 case DOCTOR:
-                    newUser = formDoctor(rs1);
+                    newUser = formDoctor(rs1, true);
                     break;
                 case EDUCATIONAL_REPRESENTATIVE:
                 case MEDICAL_REPRESENTATIVE:
@@ -110,25 +114,28 @@ public class UserMapper implements UserMapperInterface<User> {
             }
         }
         
+        extractUserStatement.close();
+        
         if (newUser != null)
         {
             users.add(newUser);
-            List<Notification> notifications = ntfMapper.findAllForUser(id);
-            newUser.setNotifications(notifications);
-            for (Notification it : notifications)
-                it.setOwner(newUser);
+            return arrangeUser(newUser.getId());
         }
-
-        extractUserStatement.close();
         
-        return newUser;
+        return null;
     }
-
     @Override
     public User findByID(int id) throws SQLException {
+        return findByID(id, true);
+    }
+   
+    // now fetchDependencies is important for getting all doctors of medical institution
+    public User findByID(int id, boolean fetchDependencies) throws SQLException {
         for (User it : users) {
-            if (it.getId() == id)
+            if (it.getId() == id) {
+                arrangeUser(it);
                 return it;
+            }
         }
 
         // User not found, extract from database
@@ -162,7 +169,7 @@ public class UserMapper implements UserMapperInterface<User> {
                     newUser = formCitizen(rs1);
                     break;
                 case DOCTOR:
-                    newUser = formDoctor(rs1);
+                    newUser = formDoctor(rs1, fetchDependencies);
                     break;
                 case EDUCATIONAL_REPRESENTATIVE:
                 case MEDICAL_REPRESENTATIVE:
@@ -173,20 +180,76 @@ public class UserMapper implements UserMapperInterface<User> {
             }
         }
         
+        extractUserStatement.close();
+        
         if (newUser != null)
         {
             users.add(newUser);
-            List<Notification> notifications = ntfMapper.findAllForUser(id);
-            newUser.setNotifications(notifications);
-            for (Notification it : notifications)
-                it.setOwner(newUser);
+            return arrangeUser(newUser.getId());
         }
 
-        extractUserStatement.close();
-
-        return newUser;
+        return null;
     }
 
+    private User arrangeUser(int id) throws SQLException{
+        for (User user : users) {
+            if (user.getId() == id) {
+                return arrangeUser(user);
+            }
+        }
+        return null;
+    }
+    
+    private User arrangeUser(User user) throws SQLException {
+        int id = user.getId();
+        List<Notification> notifications = ntfMapper.findAllForUser(user.getId());
+        user.setNotifications(notifications);
+        for (Notification it : notifications) {
+            it.setOwner(user);
+        }
+
+        if (user.getUserType().equals(User.UserType.CITIZEN)) {
+            Citizen citizen = (Citizen) user;
+
+            Map<String, Child> childs = childMapper.findAllForUser(id);
+            for (Map.Entry<String, Child> entry : childs.entrySet()) {
+                entry.getValue().setParent(citizen);
+            }
+            citizen.setChilds(childs);
+
+            List<EduRequest> eduRequests = eduRequestMapper.findAllForUser(id);
+            Iterator<EduRequest> i = eduRequests.iterator();
+            while (i.hasNext()) {
+                EduRequest it = i.next(); // must be called before you can call i.remove()
+                if (it.getInstitution() == null) {
+                    it.setInstitution(educationalInstitutionMapper.findByID(eduRequestMapper.getInstitutionId(it.getId())));
+                }
+
+                if (it.getParent() == null) {
+                    it.setParent(citizen);
+                    if (it.getChild().getParent() == null) {
+                        it.getChild().setParent(citizen);
+                    }
+                }
+
+                if (it.getInstitution() == null) {
+                    i.remove();
+                }
+            }
+            citizen.setEduRequests(eduRequests);
+
+            List<Ticket> tickets = ticketMapper.findAllForUser(id);
+            for (Ticket it : tickets) {
+                it.setUser(citizen);
+                if (it.getChild() != null) {
+                    it.getChild().setParent(citizen);
+                }
+            }
+            citizen.setTickets(tickets);
+        }
+        return user;
+    }
+    
     @Override
     public List<User> findAll() throws SQLException {
         List<User> all = new ArrayList<>();
@@ -215,7 +278,7 @@ public class UserMapper implements UserMapperInterface<User> {
 
         User user;
         while (rs.next()) {
-            user = findByID(rs.getInt("user"));
+            user = findByID(rs.getInt("user"), false);
             if (user != null)
                 all.add((Doctor) user);
         }
@@ -223,7 +286,7 @@ public class UserMapper implements UserMapperInterface<User> {
         return all;
     }
 
-    private Doctor formDoctor(ResultSet rs) throws SQLException {
+    private Doctor formDoctor(ResultSet rs, boolean fetchDependencies) throws SQLException {
         int id = rs.getInt("id");
         String login = rs.getString("login");
         String password = rs.getString("password");
@@ -234,9 +297,7 @@ public class UserMapper implements UserMapperInterface<User> {
         int institutionId = rs.getInt("institution_id");
         int approved = rs.getInt("approved");
         
-        MedicalInstitution institution = medicalInstitutionMapper.findByID(institutionId);
-        if (institution == null)
-            return null;
+        MedicalInstitution institution = fetchDependencies ? medicalInstitutionMapper.findByID(institutionId) : null;
         
         Doctor newDoctor = new Doctor(login, password, fullName, email, institution, position, summary, (approved == 1));
         newDoctor.setId(id);
@@ -257,35 +318,6 @@ public class UserMapper implements UserMapperInterface<User> {
         
         Citizen newCitizen = new Citizen(login, password, fullName, email, policy, passport, birthDate);
         newCitizen.setId(id);
-        
-        List<Child> childs = childMapper.findAllForUser(id);
-        for (Child it : childs) {
-            it.setParent(newCitizen);
-            newCitizen.addChild(it);
-        }
-        
-        List<EduRequest> eduRequests = eduRequestMapper.findAllForUser(id);
-        for (EduRequest it : eduRequests) {
-            if (it.getInstitution() == null) {
-                it.setInstitution(educationalInstitutionMapper.findByID(eduRequestMapper.getInstitutionId(it.getId())));
-            }
-                
-            if (it.getParent() == null ) {
-                it.setParent(newCitizen);
-                if (it.getChild().getParent() == null) it.getChild().setParent(newCitizen);
-            }
-                
-            if (it.getInstitution() != null ) {
-                newCitizen.addEduRequest(it);
-            }
-        }
-        
-        List<Ticket> tickets = ticketMapper.findAllForUser(id);
-        for (Ticket it : tickets) {
-            it.setUser(newCitizen);
-            if (it.getChild() != null) it.getChild().setParent(newCitizen);
-            newCitizen.addTicket(it);
-        }
 
         return newCitizen;
     }
@@ -470,27 +502,27 @@ public class UserMapper implements UserMapperInterface<User> {
 
         if (doctorId < 1) return;
         
-        String deleteSQL = "DELETE FROM feedbacks WHERE user = ? or to_user = ?;";
-        PreparedStatement deleteStatement = connection.prepareStatement(deleteSQL);
-        deleteStatement.setInt(1, doctorId);
-        deleteStatement.setInt(2, doctorId);
-        deleteStatement.execute();
-        
-        deleteSQL = "DELETE FROM tickets WHERE doctor = ?;";
-        deleteStatement = connection.prepareStatement(deleteSQL);
-        deleteStatement.setInt(1, doctorId);
-        deleteStatement.execute();
-        
-        deleteSQL = "DELETE FROM doctors WHERE user = ?;";
-        deleteStatement = connection.prepareStatement(deleteSQL);
-        deleteStatement.setInt(1, doctorId);
-        deleteStatement.execute();
-        
-        deleteSQL = "DELETE FROM users WHERE id = ?;";
-        deleteStatement = connection.prepareStatement(deleteSQL);
-        deleteStatement.setInt(1, doctorId);
-        deleteStatement.execute();
-        deleteStatement.close();
+        try {
+            connection.setAutoCommit(false);
+            feedbackMapper.deleteFeedbacksForUser(doctorId);
+            ticketMapper.deleteTicketsForDoctor(doctorId);
+
+            String deleteSQL = "DELETE FROM doctors WHERE user = ?;";
+            PreparedStatement deleteStatement = connection.prepareStatement(deleteSQL);
+            deleteStatement.setInt(1, doctorId);
+            deleteStatement.execute();
+
+            deleteSQL = "DELETE FROM users WHERE id = ?;";
+            deleteStatement = connection.prepareStatement(deleteSQL);
+            deleteStatement.setInt(1, doctorId);
+            deleteStatement.execute();
+            deleteStatement.close();
+            connection.commit();
+        } catch (Exception e) {
+            connection.rollback();
+        } finally {
+            connection.setAutoCommit(true);
+        }
     }
     
     @Override

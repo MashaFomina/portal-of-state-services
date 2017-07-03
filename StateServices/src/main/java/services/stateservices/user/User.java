@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Date;
 import services.stateservices.errors.NoRightsException;
+import services.stateservices.service.NotificationEmaiService;
 
 public abstract class User implements UserInterface {
     public enum UserType {
@@ -44,7 +45,7 @@ public abstract class User implements UserInterface {
     private boolean authenticated;
     private UserType userType;
     protected StorageRepository repository;
-    private List<Notification> notifications;
+    protected List<Notification> notifications;
 
     public User(String login, String password, String fullName, String email, UserType userType) {
         this.login = login;
@@ -64,6 +65,8 @@ public abstract class User implements UserInterface {
     
     @Override
     public void addNotification(String notification) {
+        NotificationEmaiService service = new NotificationEmaiService(email, notification);
+        service.sendNotification();
         Date date = new Date();
         Notification n = new Notification(this, notification, date);
         notifications.add(n);

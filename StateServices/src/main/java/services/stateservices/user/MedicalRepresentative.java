@@ -5,6 +5,8 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import services.stateservices.errors.NoRightsException;
@@ -43,11 +45,11 @@ public class MedicalRepresentative extends User implements InstitutionRepresenta
         institution.addDoctor(doctor);
     }
     
-    public void removeDoctor(Doctor doctor) throws NoRightsException {
+    public Set<Citizen> removeDoctor(Doctor doctor) throws NoRightsException {
         if (!doctor.getInstitution().equals(institution)) {
             throw new NoRightsException("You have no rights to remove this doctor!");
         }
-        institution.removeDoctor(doctor);
+        return institution.removeDoctor(doctor);
     }
     
     public void addTickets(Doctor doctor, Date start, Date end, int intervalMinutes) throws InvalidTicketsDatesException, NoRightsException {
@@ -59,7 +61,7 @@ public class MedicalRepresentative extends User implements InstitutionRepresenta
         if (end.before(start) || start.before(currentDate)) {
             throw new InvalidTicketsDatesException();
         }
-        if (!(start.getYear() == end.getYear() && start.getDay() == end.getDay()) || !(7 < start.getHours() && start.getHours() < end.getHours() && end.getHours() < 21)) {
+        if (!(start.getYear() == end.getYear() && start.getDay() == end.getDay()) || !(7 < start.getHours() && (start.getHours() < end.getHours() || (start.getHours() == end.getHours() && start.getMinutes() < end.getMinutes())) && end.getHours() < 21)) {
             throw new InvalidTicketsDatesException("You must determine start and end in one day between 7:00 and 21:00!");
         }
         if (intervalMinutes < 0) {
@@ -94,20 +96,21 @@ public class MedicalRepresentative extends User implements InstitutionRepresenta
         
         Citizen user = ticket.getUser();
         if (user != null) {
-            String notification = "Sorry, but your ticket to " + ticket.getDoctor().getFullName() + " in " + institution.getTitle() + " on " + ticket.getDate() + " was canceled!";
-            user.addNotification(notification);
-            NotificationEmaiService service = new NotificationEmaiService(user.getEmail(), notification);
-            service.sendNotification();
+            if (ticket.canBeRefused()) {
+                String notification = "Sorry, but your ticket to " + ticket.getDoctor().getFullName() + " in " + institution.getTitle() + " on " + ticket.getDate() + " was canceled!";
+                user.addNotification(notification);
+            }
             user.removeTicket(ticket);
         }
         institution.removeTicket(ticket);
     }
     
-    public void deleteTickets(Doctor doctor, Date date) throws NoRightsException {
+    public Set<Citizen> deleteTickets(Doctor doctor, Date date) throws NoRightsException {
         if (!doctor.getInstitution().equals(institution)) {
             throw new NoRightsException("You have no rights to delete tickets of doctor from other institution!");
         }
         List<Ticket> set = institution.getTickets();
+        Set<Citizen> citizensOfRemovedTicketsToUpdate = new HashSet<>();
         Iterator<Ticket> i = set.iterator();
         Citizen user;
         Ticket t;
@@ -116,22 +119,26 @@ public class MedicalRepresentative extends User implements InstitutionRepresenta
             if (t.getDoctor().equals(doctor) && (date == null || DateUtils.isSameDay(date, t.getDate()))) {
                 user = t.getUser();
                 if (user != null) {
+                    if (t.canBeRefused()) {
+                        String notification = "Sorry, but your ticket to " + t.getDoctor().getFullName() + " in " + institution.getTitle() + " on " + t.getDate() + " was canceled!";
+                        user.addNotification(notification);
+                        citizensOfRemovedTicketsToUpdate.add(user);
+                    }
                     user.removeTicket(t);
                 }
                 i.remove();
             }   
         }
+        return citizensOfRemovedTicketsToUpdate;
     }
         
     public void confirmVisit(Ticket ticket, String summary) throws NoRightsException {
         if (!ticket.getDoctor().getInstitution().equals(institution)) {
             throw new NoRightsException("You have no rights to confirm visits of other institution!");
         }
-        if (ticket.getUser() != null) {
+        if (ticket.getUser() != null && !ticket.isVisited()) {
             String notification = "Now your can leave feedback about your visit to " + institution.getTitle();
             ticket.getUser().addNotification(notification);
-            NotificationEmaiService service = new NotificationEmaiService(ticket.getUser().getEmail(), notification);
-            service.sendNotification();
         }
         ticket.setVisited(true, summary);
     }

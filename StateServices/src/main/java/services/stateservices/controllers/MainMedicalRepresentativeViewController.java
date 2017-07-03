@@ -6,6 +6,8 @@
 package services.stateservices.controllers;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import javafx.application.Platform;
@@ -19,6 +21,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
@@ -27,11 +30,13 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
+import javafx.scene.control.Tooltip;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 import javafx.util.Callback;
+import javafx.util.StringConverter;
 import services.stateservices.Main;
 import services.stateservices.facade.Facade;
 import services.stateservices.facade.Struct;
@@ -83,9 +88,11 @@ public class MainMedicalRepresentativeViewController extends InstitutionsControl
         infoAddressField.setText(facade.getMedicalInstitutionAddress(institution));
         infoTelephoneField.setText(facade.getMedicalInstitutionTelephone(institution));
         infoFaxField.setText(facade.getMedicalInstitutionFax(institution));
+        
         setUpTicketsTable();
         setUpFeedbackTable();
         setUpDoctorsTable();
+        
         onClickUpdateButton();
     }
 
@@ -101,6 +108,10 @@ public class MainMedicalRepresentativeViewController extends InstitutionsControl
         infoAddressField.setText(facade.getMedicalInstitutionAddress(institution));
         infoTelephoneField.setText(facade.getMedicalInstitutionTelephone(institution));
         infoFaxField.setText(facade.getMedicalInstitutionFax(institution));
+        
+        InstitutionsController.setFocusRefresh(ticketTable);
+        InstitutionsController.setFocusRefresh(feedbackTable);
+        InstitutionsController.setFocusRefresh(doctorsTable);
     }
 
     @FXML
@@ -442,5 +453,86 @@ public class MainMedicalRepresentativeViewController extends InstitutionsControl
 
     @FXML
     private void onClickRemoveTicketsButton(MouseEvent event) {
+        if (institution < 1 || doctors.isEmpty()) return;
+        
+        Dialog<Struct> dialog = new Dialog<>();
+        dialog.setTitle("Remove tickets for doctor on date (format 2017-02-13)");
+
+        // Set the button types.
+        ButtonType buttonType = new ButtonType("OK", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(buttonType, ButtonType.CANCEL);
+
+        GridPane gridPane = new GridPane();
+        gridPane.setHgap(10);
+        gridPane.setVgap(10);
+        gridPane.setPadding(new Insets(20, 150, 10, 10));
+
+        ChoiceBox<Struct> selectDoctor = new ChoiceBox<Struct>();
+        selectDoctor.setItems(doctors);
+        selectDoctor.setConverter(new StringConverter<Struct>() {
+              @Override
+              public String toString(Struct struct) {
+                if (struct == null){
+                  return null;
+                } else {
+                  return struct.get("fullName");
+                }
+              }
+
+            @Override
+            public Struct fromString(String fullName) {
+                return null;
+            }
+        });
+        selectDoctor.setTooltip(new Tooltip("Select doctor"));
+        
+        TextField date = new TextField();
+        date.setPromptText("Enter date");
+
+        gridPane.add(new Label("Select doctor:"), 0, 0);
+        gridPane.add(selectDoctor, 1, 0);
+        gridPane.add(new Label("Enter date (for all leave blank):"), 0, 1);
+        gridPane.add(date, 1, 1);
+
+        dialog.getDialogPane().setContent(gridPane);
+
+        // Request focus on the full name field by default.
+        Platform.runLater(() -> selectDoctor.requestFocus());
+
+        // Convert the result when the login button is clicked.
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == buttonType) {
+                Struct fields = new Struct();
+                fields.add("id", (selectDoctor.getValue() != null) ? selectDoctor.getValue().get("id") : "0");
+                fields.add("date", date.getText());
+                return fields;
+            }
+            return null;
+        });
+
+        Optional<Struct> result = dialog.showAndWait();
+
+        result.ifPresent(fields -> {
+            if (!fields.get("id").equals("0")) {
+                boolean ret = facade.cancelTicketsByRepresentative(user, new Integer(fields.get("id")), fields.get("date"));
+                if (ret) {
+                    onClickUpdateButton();
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("Tickets were successfully removed");
+                    alert.setHeaderText("Tickets were successfully removed!");
+                    alert.showAndWait();
+                } else {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("Error");
+                    alert.setHeaderText("Error during removing tickets for doctor on date! Check date format!");
+                    alert.showAndWait();
+                }
+            } else {
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Error");
+                alert.setHeaderText("You must select doctor!");
+                alert.showAndWait();
+            }
+        });
     }
 }

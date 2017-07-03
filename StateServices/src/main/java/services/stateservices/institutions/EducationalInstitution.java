@@ -89,6 +89,10 @@ public class EducationalInstitution extends Institution {
         updated = true;
     }
 
+    public void setEduRequests(List<EduRequest> requests) {
+        this.requests = requests;
+    }
+    
     public void addEduRequest(EduRequest request) throws NoRightsException {
         if (!request.getInstitution().equals(this)) {
             throw new NoRightsException("You have no ability to add educational request with other institution to this institution!");

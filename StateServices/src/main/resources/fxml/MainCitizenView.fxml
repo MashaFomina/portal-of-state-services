@@ -16,7 +16,7 @@
 <AnchorPane prefHeight="637.0" prefWidth="921.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="services.stateservices.controllers.MainCitizenViewController">
    <children>
       <Label fx:id="userLabel" alignment="BASELINE_LEFT" layoutX="66.0" layoutY="14.0" prefHeight="25.0" prefWidth="112.0" text="username" />
-      <TabPane fx:id="tabs" layoutX="5.0" layoutY="67.0" prefHeight="623.0" prefWidth="894.0" tabClosingPolicy="UNAVAILABLE">
+      <TabPane fx:id="tabs" layoutX="5.0" layoutY="67.0" prefHeight="623.0" prefWidth="912.0" tabClosingPolicy="UNAVAILABLE">
         <tabs>
           <Tab text="Notifications">
             <content>
@@ -52,7 +52,7 @@
               <content>
                 <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                      <children>
-                        <TableView fx:id="ticketTable" layoutY="14.0" prefHeight="572.0" prefWidth="901.0">
+                        <TableView fx:id="ticketTable" layoutX="7.0" layoutY="14.0" prefHeight="572.0" prefWidth="905.0">
                           <columns>
                             <TableColumn fx:id="ticketDateColumn" prefWidth="139.0" text="Date" />
                               <TableColumn fx:id="ticketInstitutionColumn" prefWidth="131.0" text="Institution" />
@@ -60,7 +60,7 @@
                               <TableColumn fx:id="ticketChildColumn" prefWidth="149.0" text="Child" />
                               <TableColumn fx:id="ticketVisitedColumn" prefWidth="62.0" text="Visited" />
                               <TableColumn fx:id="ticketSummary" prefWidth="175.0" text="Summary" />
-                              <TableColumn fx:id="ticketActionColumn" prefWidth="89.0" text="Action" />
+                              <TableColumn fx:id="ticketActionColumn" prefWidth="99.0" text="Action" />
                           </columns>
                         </TableView>
                      </children>
@@ -71,7 +71,7 @@
               <content>
                 <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                      <children>
-                        <TableView fx:id="eduRequestTable" layoutY="14.0" prefHeight="566.0" prefWidth="883.0">
+                        <TableView fx:id="eduRequestTable" layoutX="9.0" layoutY="14.0" prefHeight="566.0" prefWidth="874.0">
                           <columns>
                             <TableColumn fx:id="requestCreationDateColumn" prefWidth="143.0" text="Date" />
                             <TableColumn fx:id="requestStatusColumn" minWidth="0.0" prefWidth="162.0" text="Status" />

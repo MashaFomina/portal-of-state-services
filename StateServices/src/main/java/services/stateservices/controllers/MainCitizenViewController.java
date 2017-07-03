@@ -129,10 +129,12 @@ public class MainCitizenViewController {
         birthDatetLabel.setText(facade.getCitizenBirthDate(user));
         emailLabel.setText(facade.getUserEmail(user));
         nameFullColumn.setText(facade.getUserFullName(user));
+        
         setUpNotificationTable();
         setUpChildTable();
         setUpTicketTable();
         setUpEduRequestTable();
+        
         onClickUpdateButton();
         
         if (userChilds == null || userChilds != null && userChilds.isEmpty()) {
@@ -162,7 +164,7 @@ public class MainCitizenViewController {
     }
 
     @FXML
-    private void onClickUpdateButton() {
+    public void onClickUpdateButton() {
         updateNotificationTable();
         updateChildTable();
         updateTicketTable();
@@ -173,6 +175,11 @@ public class MainCitizenViewController {
         else {
             makeEduRequestButton.setVisible(true);
         }
+        
+        InstitutionsController.setFocusRefresh(notificationTable);
+        InstitutionsController.setFocusRefresh(childTable);
+        InstitutionsController.setFocusRefresh(ticketTable);
+        InstitutionsController.setFocusRefresh(eduRequestTable);
     }
 
     @FXML
@@ -223,7 +230,6 @@ public class MainCitizenViewController {
         Optional<Struct> result = dialog.showAndWait();
 
         result.ifPresent(fields -> {
-            System.out.println(fields.get("fullName") + " " + fields.get("birthCertificate") + " " + fields.get("birthDate"));
             if (fields.get("fullName").length() > 0 && fields.get("birthCertificate").length() > 0 && fields.get("birthDate").length() > 0) {
                 boolean ret = facade.addChild(user, fields.get("fullName"), fields.get("birthCertificate"), fields.get("birthDate"));
                 if (ret) {
@@ -298,7 +304,6 @@ public class MainCitizenViewController {
                         } else {
                             btn.setOnAction(event -> {
                                 Struct fields = getTableView().getItems().get(getIndex());
-                                System.out.println("Child id: " + fields.get("id"));
                                 boolean ret = facade.deleteChild(user, fields.get("id"));
                                 if (ret) {
                                     onClickUpdateButton();

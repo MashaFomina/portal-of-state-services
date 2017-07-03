@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import services.stateservices.user.User;
@@ -57,7 +58,16 @@ public class StorageRepository {
     }
     
     public Ticket getTicket(int id) throws SQLException {
-        return ticketMapper.findByID(id);
+        Ticket ticket = ticketMapper.findByID(id);
+        Integer userId = ticketMapper.getUserId(ticket.getId());
+        if (userId > 0 && ticket.getUser() == null) {
+            Citizen citizen = getCitizen(userId);
+            ticket.setUser(citizen);
+            if (ticket.getChild() != null) {
+                ticket.getChild().setParent(citizen);
+            }
+        }
+        return ticket;
     }
         
     public EduRequest getEduRequest(int id) throws SQLException {
@@ -178,9 +188,27 @@ public class StorageRepository {
         return null;
     }
     
+    public EducationalInstitution getEducationalInstitution(int id, boolean refresh) {
+        try {
+            return educationalInstitutionMapper.findByID(id, refresh);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+        
+    public MedicalInstitution getMedicalInstitution(int id, boolean refresh) {
+        try {
+            return medicalInstitutionMapper.findByID(id, refresh);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+    
     public EducationalInstitution getEducationalInstitution(int id) {
         try {
-            return educationalInstitutionMapper.findByID(id);
+            return educationalInstitutionMapper.findByID(id, false);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -189,7 +217,7 @@ public class StorageRepository {
         
     public MedicalInstitution getMedicalInstitution(int id) {
         try {
-            return medicalInstitutionMapper.findByID(id);
+            return medicalInstitutionMapper.findByID(id, false);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -250,9 +278,30 @@ public class StorageRepository {
         return null;
     }
     
-    public List<Doctor> findAllDoctors(int institutionId) {
+    public Doctor getDoctor(int id) {
         try {
-            return userMapper.findAllDoctors(institutionId);
+            User user = userMapper.findByID(id);
+            if (user != null && user.isDoctor())  {
+                return (Doctor) user;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+    
+    public List<Doctor> findAllDoctors(MedicalInstitution institution) {
+        try {
+            List<Doctor> doctors = userMapper.findAllDoctors(institution.getId());
+            // To avoid recursion
+            Iterator<Doctor> i = doctors.iterator();
+            while (i.hasNext()) {
+                Doctor it = i.next();
+                if (it.getInstitution() == null) {
+                    it.setInstitution(institution);
+                }
+            }
+            return doctors;
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -267,6 +316,14 @@ public class StorageRepository {
             e.printStackTrace();
         }     
     }
+    
+    public void updateTicket(Ticket ticket) {
+        try {
+            ticketMapper.update(ticket);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }     
+    }
         
     public void removeDoctor(String login) throws SQLException {
         userMapper.deleteDoctor(login);
@@ -276,6 +333,10 @@ public class StorageRepository {
         ticketMapper.delete(ticket);
     }
 
+    public void removeTickets(Doctor doctor, Date ticketsDate) throws SQLException {
+        ticketMapper.delete(doctor, ticketsDate);
+    }
+    
     public Administrator getAdministrator(String login) {
         try {
             User user = userMapper.findByLogin(login);
@@ -319,6 +380,14 @@ public class StorageRepository {
 
     public boolean authenticateUser(User user, String password) {
         return userMapper.authenticateUser(user, password);
+    }
+    
+    public void deleteEduRequestsForChild(Child child) throws SQLException {
+        eduRequestMapper.deleteEduRequestsForChild(child);
+    }
+    
+    public void cancelTicketsForChild(Child child) throws SQLException {
+        ticketMapper.cancelTicketsForChild(child);
     }
 
     public void signOut (String login) {

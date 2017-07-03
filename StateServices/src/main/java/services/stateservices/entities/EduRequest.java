@@ -122,6 +122,10 @@ public class EduRequest {
         return (status.equals(Status.OPENED));
     }
     
+    public boolean isClosed() {
+        return (status.equals(Status.CHILD_IS_ENROLLED) || status.equals(Status.REFUSED));
+    }
+        
     public boolean isChildEnrolled() {
         return (status.equals(Status.CHILD_IS_ENROLLED));
     }

@@ -65,6 +65,7 @@ public class EmailFunctions {
         }
     }
 
+    // return false if quantity of mail servers for domain name is equals zero or error occured while communication with DNS service
     public static boolean doMailServerLookup( String hostName ) throws NamingException {
         Hashtable env = new Hashtable();
         env.put("java.naming.factory.initial",

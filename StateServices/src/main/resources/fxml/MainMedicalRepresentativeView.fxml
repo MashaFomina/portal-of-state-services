@@ -6,8 +6,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-
-<AnchorPane id="AnchorPane" prefHeight="620.0" prefWidth="1079.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8" fx:controller="services.stateservices.controllers.MainMedicalRepresentativeViewController">
+<AnchorPane id="AnchorPane" prefHeight="620.0" prefWidth="1079.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="services.stateservices.controllers.MainMedicalRepresentativeViewController">
    <children>
       <Button fx:id="addFeedbackButton" layoutX="820.0" layoutY="18.0" mnemonicParsing="false" onMouseClicked="#onClickAddFeedback" text="Add Feedback" />
       <Button fx:id="updateButton" layoutX="924.0" layoutY="18.0" mnemonicParsing="false" onMouseClicked="#onClickUpdateButton" text="Update" />
@@ -62,13 +61,13 @@
                <content>
                   <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                      <children>
-                        <TableView fx:id="feedbackTable" layoutX="8.0" layoutY="11.0" prefHeight="497.0" prefWidth="939.0">
+                        <TableView fx:id="feedbackTable" layoutX="8.0" layoutY="11.0" prefHeight="497.0" prefWidth="1037.0">
                            <columns>
                               <TableColumn fx:id="feedbackDateColumn" prefWidth="148.0" text="Date" />
-                              <TableColumn fx:id="feedbackUserColumn" prefWidth="122.0" text="User" />
-                              <TableColumn fx:id="feedbackToUserColumn" prefWidth="134.0" text="To user" />
-                              <TableColumn fx:id="feedbackTextColumn" prefWidth="375.0" text="Text" />
-                              <TableColumn fx:id="feedbackActionColumn" prefWidth="159.0" text="Action" />
+                              <TableColumn fx:id="feedbackUserColumn" prefWidth="254.0" text="User" />
+                              <TableColumn fx:id="feedbackToUserColumn" prefWidth="188.0" text="To user" />
+                              <TableColumn fx:id="feedbackTextColumn" prefWidth="278.0" text="Text" />
+                              <TableColumn fx:id="feedbackActionColumn" prefWidth="168.0" text="Action" />
                            </columns>
                         </TableView>
                      </children>
@@ -79,7 +78,7 @@
                <content>
                   <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                      <children>
-                        <TableView fx:id="ticketTable" layoutY="14.0" prefHeight="572.0" prefWidth="1041.0">
+                        <TableView fx:id="ticketTable" layoutX="6.0" layoutY="14.0" prefHeight="509.0" prefWidth="1041.0">
                            <columns>
                               <TableColumn fx:id="ticketDateColumn" prefWidth="139.0" text="Date" />
                               <TableColumn fx:id="ticketDoctorColumn" prefWidth="149.0" text="Doctor" />

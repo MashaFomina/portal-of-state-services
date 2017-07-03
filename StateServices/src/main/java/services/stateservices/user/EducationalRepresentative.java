@@ -78,7 +78,7 @@ public class EducationalRepresentative extends User implements InstitutionRepres
             Iterator<EduRequest> i = set.iterator();
             while (i.hasNext()) {
                 EduRequest r = i.next(); // must be called before you can call i.remove()
-                if (!r.equals(request)) {
+                if (!r.equals(request) && request.getChild().equals(r.getChild())) {
                     r.getInstitution().removeEduRequest(r);
                     i.remove();
                 }

@@ -21,7 +21,7 @@ public class NotificationEmaiService {
     private String notification;
 
     public NotificationEmaiService(String toEmail, String notification) {
-        // Read configuration file
+        // Read configuration file for getting email account
         try {
             Properties prop = new Properties();
             String propFileName = "config.ini";
@@ -54,13 +54,16 @@ public class NotificationEmaiService {
         return sendEmail();
     }
 
+    // check if email address is valid or not
     private boolean isValidEmailAddress() {
+        // check format
         try {
             new InternetAddress(toEmail).validate();
         } catch (AddressException ex) {
             return false;
         }
         String hostname = toEmail.split("@")[1];
+        // request to DNS
         try {
             return EmailFunctions.doMailServerLookup(hostname);
         } catch (NamingException e) {
@@ -71,6 +74,7 @@ public class NotificationEmaiService {
     private boolean sendEmail() {
 
         Properties props = new Properties();
+        // set secure connection to SMTP server
         props.put("mail.smtp.host", "smtp.gmail.com");
         props.put("mail.smtp.port", "587");
         props.put("mail.smtp.auth", "true");
@@ -92,13 +96,5 @@ public class NotificationEmaiService {
 
         EmailFunctions.sendEmail(session, toEmail, "Important notification", sb.toString());
         return true;
-    }
-
-    private class SMTPAuthenticator extends javax.mail.Authenticator {
-        public PasswordAuthentication getPasswordAuthentication() {
-            String username = "pmsbot.spbpu@gmail.com";
-            String password = "pmsbotspbpu";
-            return new PasswordAuthentication(username, password);
-        }
     }
 }

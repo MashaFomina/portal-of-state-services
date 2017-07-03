@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -32,7 +33,7 @@ public class Facade implements FacadeInterface {
 
     private StorageRepository repository;
     DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    DateFormat dateFormatBirthDate = new SimpleDateFormat("yyyy-MM-dd");
+    DateFormat dateFormatWithoutTime = new SimpleDateFormat("yyyy-MM-dd");
 
     public Facade() {
         repository = StorageRepository.getInstance();
@@ -83,7 +84,7 @@ public class Facade implements FacadeInterface {
             struct.add("id", Integer.toString(c.getId()));
             struct.add("fullName", c.getFullName());
             struct.add("birthCertificate", c.getBirthCertificate());
-            struct.add("birthDate", dateFormatBirthDate.format(c.getBirthDate()));
+            struct.add("birthDate", dateFormatWithoutTime.format(c.getBirthDate()));
             fields.add(struct);
         }
         return fields;
@@ -150,17 +151,20 @@ public class Facade implements FacadeInterface {
         return repository.canAddFeedbackToMedicalInstitution(user, institution);
     }
     
-    public List<Struct> getTicketsForMedicalInstitution(int id, String doctorLogin)
+    // get available tickets for user if length of login is more than 0 or tickets  for institution
+    public List<Struct> getTicketsForMedicalInstitution(String login, int id, String doctorLogin)
     {
         Doctor doctor = repository.getDoctor(doctorLogin);
         List<Ticket> tickets = new ArrayList<>();
         try {
-            tickets = (doctor == null) ? repository.getMedicalInstitution(id).getTickets() : repository.getMedicalInstitution(id).getTickets(doctor);
+            tickets = (doctor == null) ? repository.getMedicalInstitution(id, true).getTickets() : repository.getMedicalInstitution(id, true).getTickets(doctor);
         } catch (NoRightsException ex) {
             Logger.getLogger(Facade.class.getName()).log(Level.SEVERE, null, ex);
         }
         List<Struct> fields = new ArrayList<>();
         for (Ticket t: tickets) {
+            if (login.length() > 0 && ((t.getUser() != null && !t.getUser().getLogin().equals(login)) || !t.canBeRefused()))
+                continue;
             Struct struct = new Struct();
             struct.add("id", Integer.toString(t.getId()));
             struct.add("date", dateFormat.format(t.getDate()));
@@ -171,12 +175,12 @@ public class Facade implements FacadeInterface {
             struct.add("visited", t.isVisited() ? "yes" : "no");
             struct.add("summary", t.getSummary());
             struct.add("canRefuse", t.canBeRefused() ? "yes" : "no");
-            struct.add("canSetVisited", (!t.canBeRefused() && !t.isVisited()) ? "yes" : "no");
+            struct.add("canSetVisited", (!t.canBeRefused() && !t.isVisited() &&  t.getUser() != null) ? "yes" : "no");
             fields.add(struct);
         }
         return fields;
     }
-    
+        
     @Override
     public String getCitizenPassport(String login) {
          return repository.getCitizen(login).getPassport();
@@ -189,7 +193,7 @@ public class Facade implements FacadeInterface {
     
     @Override
     public String getCitizenBirthDate(String login) {
-        return dateFormatBirthDate.format(repository.getCitizen(login).getBirthDate());
+        return dateFormatWithoutTime.format(repository.getCitizen(login).getBirthDate());
     }
     
     @Override
@@ -207,7 +211,7 @@ public class Facade implements FacadeInterface {
         Citizen citizen = repository.getCitizen(login);
         boolean result = false;
         try {
-            result = citizen.createChildInfo(fullName, birthCertificate, dateFormatBirthDate.parse(birthDate));
+            result = citizen.createChildInfo(fullName, birthCertificate, dateFormatWithoutTime.parse(birthDate));
             repository.updateUser(citizen);
         } catch (ParseException ex) {
             Logger.getLogger(Facade.class.getName()).log(Level.SEVERE, null, ex);
@@ -238,7 +242,7 @@ public class Facade implements FacadeInterface {
             Citizen citizen = repository.getCitizen(login);
             Ticket ticket = repository.getTicket(new Integer(ticketId));
             citizen.cancelTicket(ticket);
-            repository.updateUser(citizen);
+            repository.updateTicket(ticket);
             result = true;
         } catch (NoRightsException | SQLException ex) {
             Logger.getLogger(Facade.class.getName()).log(Level.SEVERE, null, ex);
@@ -284,7 +288,7 @@ public class Facade implements FacadeInterface {
     }
     
     public List<Struct> getAllDoctorsForInstitution(int id) {
-        Set<Doctor> doctors = repository.getMedicalInstitution(id).getDoctors();
+        List<Doctor> doctors = repository.getMedicalInstitution(id, true).getDoctors();
         List<Struct> fields = new ArrayList<>();
 
         for (Doctor d: doctors) {
@@ -301,7 +305,7 @@ public class Facade implements FacadeInterface {
     }
     
     public List<Struct> getAllEduRequestsForInstitution(int id) {
-        List<EduRequest> requests = repository.getEducationalInstitution(id).getEduRequests();
+        List<EduRequest> requests = repository.getEducationalInstitution(id, true).getEduRequests();
         List<Struct> fields = new ArrayList<>();
 
         for (EduRequest r: requests) {
@@ -310,11 +314,11 @@ public class Facade implements FacadeInterface {
             struct.add("creationDate", dateFormat.format(r.getCreationDate()));
             struct.add("status", r.getStatus().getBeautifulText());
             struct.add("child", r.getChild().getFullName());
-            struct.add("childBirthDate", dateFormatBirthDate.format(r.getChild().getBirthDate()));
+            struct.add("childBirthDate", dateFormatWithoutTime.format(r.getChild().getBirthDate()));
             struct.add("classNumber", Integer.toString(r.getClassNumber()));
             struct.add("appointment", r.getAppointment() != null ?  dateFormat.format(r.getAppointment()) : "");
             struct.add("mustAccept", r.getStatus().equals(EduRequest.Status.OPENED) ? "yes" : "no");
-            struct.add("mustDecide", (r.getAppointment() != null && r.isPassedAppointment()) ? "yes" : "no");
+            struct.add("mustDecide", (r.getAppointment() != null && r.isPassedAppointment() && !r.isClosed()) ? "yes" : "no");
             struct.add("mustMakeAppointment", (r.getStatus().equals(EduRequest.Status.ACCEPTED_BY_PARENT) && r.getAppointment() == null) ? "yes" : "no");
             fields.add(struct);
         }
@@ -322,7 +326,7 @@ public class Facade implements FacadeInterface {
     }
     
     public List<Struct> getSeatsForEducationalInstitution(int id) {
-        EducationalInstitution institution = repository.getEducationalInstitution(id);
+        EducationalInstitution institution = repository.getEducationalInstitution(id, true);
         Map<Integer, Integer> seats = institution.getSeats();
         List<Struct> fields = new ArrayList<>();
 
@@ -338,7 +342,7 @@ public class Facade implements FacadeInterface {
     }
     
     public List<Integer> getClassesWithFreeSeatsForEducationalInstitution(int id) {
-        EducationalInstitution institution = repository.getEducationalInstitution(id);
+        EducationalInstitution institution = repository.getEducationalInstitution(id, true);
         Map<Integer, Integer> seats = institution.getSeats();
         List<Integer> classes = new ArrayList<>();
 
@@ -357,9 +361,11 @@ public class Facade implements FacadeInterface {
             Citizen citizen = repository.getCitizen(login);
             EducationalInstitution institution = repository.getEducationalInstitution(institutionId);
             Child child = repository.getChild(childId);
-            citizen.createEduRequest(child, institution, classNumber);
-            repository.updateEducationalInstitution(institution);
-            result = true;
+            EduRequest request = citizen.createEduRequest(child, institution, classNumber);
+            if (request != null) {
+                repository.updateEducationalInstitution(institution);
+                result = true;
+            }
         } catch (NoFreeSeatsException | NoRightsException | SQLException ex) {
             Logger.getLogger(Facade.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -389,6 +395,9 @@ public class Facade implements FacadeInterface {
             Ticket ticket = repository.getTicket(new Integer(ticketId));
             user.confirmVisit(ticket, summary);
             repository.updateMedicalInstitution(user.getInstitution());
+            if (ticket.getUser() != null) {
+                repository.updateUser(ticket.getUser());
+            }
             result = true;
         } catch (NoRightsException | SQLException ex) {
             Logger.getLogger(Facade.class.getName()).log(Level.SEVERE, null, ex);
@@ -397,7 +406,7 @@ public class Facade implements FacadeInterface {
     }
     
     public boolean cancelTicketByRepresentative(String login, String ticketId) {
-         boolean result = false;
+        boolean result = false;
         MedicalRepresentative user = repository.getMedicalRepresentative(login);
         if (user == null) return result;
         
@@ -405,6 +414,9 @@ public class Facade implements FacadeInterface {
             Ticket ticket = repository.getTicket(new Integer(ticketId));
             user.deleteTicket(ticket);
             repository.removeTicket(ticket);
+            if (ticket.getUser() != null) {
+                repository.updateUser(ticket.getUser());
+            }
             result = true;
         } catch (NoRightsException | SQLException ex) {
             Logger.getLogger(Facade.class.getName()).log(Level.SEVERE, null, ex);
@@ -412,6 +424,28 @@ public class Facade implements FacadeInterface {
         return result;
     }     
     
+    public boolean cancelTicketsByRepresentative(String login, Integer doctorId, String date) {
+        boolean result = false;
+        MedicalRepresentative user = repository.getMedicalRepresentative(login);
+        if (user == null) return result;
+        
+        try {
+            Doctor doctor = repository.getDoctor(doctorId);
+            Date ticketsDate = date.length() > 0 ? dateFormatWithoutTime.parse(date) : null;
+            if (doctor != null) {
+                repository.removeTickets(doctor, ticketsDate);
+                Set<Citizen> citizensOfRemovedTicketsToUpdate = user.deleteTickets(doctor, ticketsDate);
+                for (Citizen citizen: citizensOfRemovedTicketsToUpdate) {
+                    repository.updateUser(citizen);
+                }
+                result = true;
+            }
+        } catch (NoRightsException | ParseException | SQLException ex) {
+            Logger.getLogger(Facade.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return result;
+    }   
+        
     public boolean refuseTicketByCitizen(String login, String ticketId) {
         boolean result = false;
         Citizen user = repository.getCitizen(login);
@@ -420,7 +454,7 @@ public class Facade implements FacadeInterface {
         try {
             Ticket ticket = repository.getTicket(new Integer(ticketId));
             user.cancelTicket(ticket);
-            repository.updateUser(user);
+            repository.updateTicket(ticket);
             result = true;
         } catch (NoRightsException | SQLException ex) {
             Logger.getLogger(Facade.class.getName()).log(Level.SEVERE, null, ex);
@@ -543,7 +577,10 @@ public class Facade implements FacadeInterface {
         if (doctor != null && user != null) {
             try {
                 repository.removeDoctor(doctorLogin);
-                user.removeDoctor(doctor);
+                Set<Citizen> citizensOfRemovedTicketsToUpdate = user.removeDoctor(doctor);
+                for (Citizen citizen: citizensOfRemovedTicketsToUpdate) {
+                    repository.updateUser(citizen);
+                }
                 result = true;
             } catch (NoRightsException | SQLException ex) {
                 Logger.getLogger(MedicalRepresentative.class.getName()).log(Level.SEVERE, null, ex);
@@ -640,8 +677,18 @@ public class Facade implements FacadeInterface {
         try {
             EducationalRepresentative user = repository.getEducationalRepresentative(login);
             EduRequest request = repository.getEduRequest(new Integer(requestId));
+            
+            // get set of requests for automatic removing requests of other institutions from database
+            List<EduRequest> requests = new ArrayList(request.getParent().getEduRequests());
             user.makeChildEnrolled(request);
             repository.updateEducationalInstitution(user.getInstitution());
+            Iterator<EduRequest> i = requests.iterator();
+            while (i.hasNext()) {
+                EduRequest r = i.next(); // must be called before you can call i.remove()
+                if (!r.equals(request) && request.getChild().equals(r.getChild())) {
+                    repository.removeEduRequest(r);
+                }
+            }
             result = true;
         } catch (NoFreeSeatsException | NoRightsException | SQLException ex) {
             Logger.getLogger(Facade.class.getName()).log(Level.SEVERE, null, ex);
@@ -679,7 +726,7 @@ public class Facade implements FacadeInterface {
 
     @Override
     public Map<Integer, Integer> getEducationalInstitutionSeats(int id) {
-        EducationalInstitution institution = repository.getEducationalInstitution(id);
+        EducationalInstitution institution = repository.getEducationalInstitution(id, true);
         return (institution != null ? institution.getSeats() : null);
     }
     

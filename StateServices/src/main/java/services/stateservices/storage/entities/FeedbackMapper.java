@@ -140,6 +140,21 @@ public class FeedbackMapper implements Mapper<Feedback> {
         }
     }
 
+    public void deleteFeedbacksForUser(int userId) throws SQLException {
+        Iterator<Feedback> i = feedbacks.iterator();
+        while (i.hasNext()) {
+            Feedback feedback = i.next(); // must be called before you can call i.remove()
+            if (feedback.getUser().getId() == userId || (feedback.getToUser() != null && feedback.getToUser().getId() == userId))
+                i.remove();
+        }
+        
+        String deleteSQL = "DELETE FROM feedbacks WHERE user = ? or to_user = ?;";
+        PreparedStatement deleteStatement = connection.prepareStatement(deleteSQL);
+        deleteStatement.setInt(1, userId);
+        deleteStatement.setInt(2, userId);
+        deleteStatement.execute();
+    }
+    
     @Override
     public void closeConnection() throws SQLException {
         connection.close();

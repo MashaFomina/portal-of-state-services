@@ -74,8 +74,8 @@ public class BPEnrollChildTest extends TestCase {
         institution2.setSeats(1, 20, 5);
         assertTrue(institution2.getFreeSeats(1) == 15);
 
-        Date birthDate = new Date(2015, 0, 14);
-        String birthCertificate = "IJ1229394844";
+        Date birthDate = new Date(115, 0, 14);
+        String birthCertificate = "IJ12293949";
         citizen.createChildInfo("F I O", birthCertificate, birthDate);
         child = citizen.getChild(birthCertificate);
         assertTrue(child != null && child.getBirthCertificate().equals(birthCertificate));
@@ -125,8 +125,8 @@ public class BPEnrollChildTest extends TestCase {
         institution2.setSeats(1, 20, 5);
         assertTrue(institution2.getFreeSeats(1) == 15);
 
-        Date birthDate = new Date(2015, 0, 14);
-        String birthCertificate = "IJ1229394844";
+        Date birthDate = new Date(115, 0, 14);
+        String birthCertificate = "IJ12293949";
         citizen.createChildInfo("F I O", birthCertificate, birthDate);
         child = citizen.getChild(birthCertificate);
         assertTrue(child != null && child.getBirthCertificate().equals(birthCertificate));
@@ -158,8 +158,8 @@ public class BPEnrollChildTest extends TestCase {
         institution2.setSeats(1, 20, 5);
         assertTrue(institution2.getFreeSeats(1) == 15);
 
-        Date birthDate = new Date(2015, 0, 14);
-        String birthCertificate = "IJ1229394844";
+        Date birthDate = new Date(115, 0, 14);
+        String birthCertificate = "IJ12293949";
         citizen.createChildInfo("F I O", birthCertificate, birthDate);
         child = citizen.getChild(birthCertificate);
         assertTrue(child != null && child.getBirthCertificate().equals(birthCertificate));
@@ -194,8 +194,8 @@ public class BPEnrollChildTest extends TestCase {
         institution2.setSeats(1, 20, 5);
         assertTrue(institution2.getFreeSeats(1) == 15);
 
-        Date birthDate = new Date(2015, 0, 14);
-        String birthCertificate = "IJ1229394844";
+        Date birthDate = new Date(115, 0, 14);
+        String birthCertificate = "IJ12293949";
         citizen.createChildInfo("F I O", birthCertificate, birthDate);
         child = citizen.getChild(birthCertificate);
         assertTrue(child != null && child.getBirthCertificate().equals(birthCertificate));
@@ -238,8 +238,8 @@ public class BPEnrollChildTest extends TestCase {
         institution2.setSeats(1, 5, 5);
         assertTrue(institution2.getFreeSeats(1) == 0);
 
-        Date birthDate = new Date(2015, 0, 14);
-        String birthCertificate = "IJ1229394844";
+        Date birthDate = new Date(115, 0, 14);
+        String birthCertificate = "IJ12293949";
         citizen.createChildInfo("F I O", birthCertificate, birthDate);
         child = citizen.getChild(birthCertificate);
         assertTrue(child != null && child.getBirthCertificate().equals(birthCertificate));

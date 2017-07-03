@@ -113,7 +113,7 @@ public class Ticket {
     
     public boolean canBeRefused() {
         Date currentDate = new Date();
-        return (date.after(currentDate));
+        return date.after(currentDate);
     }
         
     public boolean isTicketForChild() {

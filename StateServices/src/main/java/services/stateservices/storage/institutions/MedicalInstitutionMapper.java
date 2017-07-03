@@ -7,12 +7,14 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import services.stateservices.entities.Child;
+import services.stateservices.entities.EduRequest;
 import services.stateservices.entities.Feedback;
 import services.stateservices.entities.Ticket;
 import services.stateservices.errors.NoRightsException;
@@ -27,22 +29,27 @@ import services.stateservices.user.Doctor;
 import services.stateservices.user.User;
 
 public class MedicalInstitutionMapper extends InstitutionMapper implements Mapper<MedicalInstitution> {
+
     private static Set<MedicalInstitution> medicalInstitutions = new HashSet<>();
     private static StorageRepository repository = null;
     private static TicketMapper ticketMapper;
     private static FeedbackMapper feedbackMapper;
 
     public MedicalInstitutionMapper() throws IOException, SQLException {
-        if (connection == null)
+        if (connection == null) {
             connection = Gateway.getInstance().getDataSource().getConnection();
-        if (repository == null)
+        }
+        if (repository == null) {
             repository = StorageRepository.getInstance();
-        if (ticketMapper == null)
+        }
+        if (ticketMapper == null) {
             ticketMapper = new TicketMapper();
-        if (feedbackMapper == null)
+        }
+        if (feedbackMapper == null) {
             feedbackMapper = new FeedbackMapper();
+        }
     }
-    
+
     public boolean canAddFeedback(int userId, int institutionId) throws SQLException {
         String selectSQL = "SELECT count(*) as count FROM tickets WHERE user = ? and institution_id = ?;";
         PreparedStatement selectStatement = connection.prepareStatement(selectSQL);
@@ -53,10 +60,10 @@ public class MedicalInstitutionMapper extends InstitutionMapper implements Mappe
         if (rs.next() && rs.getInt("count") > 0) {
             return true;
         }
-        selectStatement.close(); 
+        selectStatement.close();
         return false;
     }
-        
+
     public List<MedicalInstitution> findAllByDistrict(String city, String district) throws SQLException {
         List<MedicalInstitution> all = new ArrayList<>();
 
@@ -70,26 +77,42 @@ public class MedicalInstitutionMapper extends InstitutionMapper implements Mappe
         MedicalInstitution institution;
         while (rs.next()) {
             institution = findByID(rs.getInt("id"));
-            if (institution != null)
+            if (institution != null) {
                 all.add(institution);
+            }
         }
 
         selectStatement.close();
-        
+
         return all;
     }
-    
+
     @Override
     public MedicalInstitution findByID(int id) throws SQLException {
-        for (MedicalInstitution it : medicalInstitutions)
-            if (it.getId() == id) return it;
+        return findByID(id, false);
+    }
+    
+    public MedicalInstitution findByID(int id, boolean refresh) throws SQLException {
+        MedicalInstitution medicalInstitution = null;
+
+        for (MedicalInstitution it : medicalInstitutions) {
+            if (it.getId() == id) {
+                medicalInstitution = it;
+                if (!refresh) {
+                    return it;
+                }
+                break;
+            }
+        }
 
         String selectSQL = "SELECT * FROM institutions WHERE id = ? and is_edu = 0;";
         PreparedStatement selectStatement = connection.prepareStatement(selectSQL);
         selectStatement.setInt(1, id);
         ResultSet rs = selectStatement.executeQuery();
 
-        if (!rs.next()) return null;
+        if (!rs.next()) {
+            return null;
+        }
 
         int mid = rs.getInt("id");
         String title = rs.getString("title");
@@ -98,45 +121,44 @@ public class MedicalInstitutionMapper extends InstitutionMapper implements Mappe
         String telephone = rs.getString("telephone");
         String fax = rs.getString("fax");
         String address = rs.getString("address");
-        
+
         selectStatement.close();
 
-        MedicalInstitution newMedicalInstitution = new MedicalInstitution(title, city, district, telephone, fax, address);
-        newMedicalInstitution.setId(mid); 
-        medicalInstitutions.add(newMedicalInstitution);
-        
+        if (medicalInstitution == null) {
+            medicalInstitution = new MedicalInstitution(title, city, district, telephone, fax, address);
+            medicalInstitution.setId(mid);
+            medicalInstitutions.add(medicalInstitution);
+        } else {
+            medicalInstitution.edit(title, city, district, telephone, fax, address);
+            medicalInstitution.resetUpdated();
+        }
+
         List<Ticket> tickets = ticketMapper.findAllForInstitution(id);
-        for (Ticket it : tickets) {
-            try {
-                int userId = ticketMapper.getUserId(it.getId());
-                if (userId > 0 && it.getUser() == null) {
-                   Citizen citizen = repository.getCitizen(userId);
-                   if (it.getChild() != null) it.getChild().setParent(citizen);
+        Iterator<Ticket> i = tickets.iterator();
+        while (i.hasNext()) {
+            Ticket it = i.next(); // must be called before you can call i.remove()
+            Integer userId = ticketMapper.getUserId(it.getId());
+            if (userId > 0 && it.getUser() == null) {
+                Citizen citizen = repository.getCitizen(userId);
+                it.setUser(citizen);
+                if (it.getChild() != null) {
+                    it.getChild().setParent(citizen);
                 }
-                
-                if (userId < 1 || (userId > 0 && it.getUser() != null)) {
-                    newMedicalInstitution.addTicket(it);
-                }
-            }   catch (NoRightsException ex) {
-                Logger.getLogger(MedicalInstitutionMapper.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
+            if (userId > 0 && it.getUser() == null) {
+                i.remove();
             }
         }
-        
-        List<Doctor> doctors = repository.findAllDoctors(id);
-        for (Doctor it : doctors) {
-            try {
-                newMedicalInstitution.addDoctor(it);
-            }   catch (NoRightsException ex) {
-                Logger.getLogger(MedicalInstitutionMapper.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-        
+        medicalInstitution.setTickets(tickets);
+
+        List<Doctor> doctors = repository.findAllDoctors(medicalInstitution);
+        medicalInstitution.setDoctors(doctors);
+
         List<Feedback> feedbacks = feedbackMapper.findAllForInstitution(id);
-        for (Feedback it : feedbacks) {
-            newMedicalInstitution.addFeedback(it);
-        }
-        
-        return newMedicalInstitution;
+        medicalInstitution.setFeedbacks(feedbacks);
+
+        return medicalInstitution;
     }
 
     @Override
@@ -150,12 +172,13 @@ public class MedicalInstitutionMapper extends InstitutionMapper implements Mappe
         MedicalInstitution institution;
         while (rs.next()) {
             institution = findByID(rs.getInt("id"));
-            if (institution != null)
+            if (institution != null) {
                 all.add(institution);
+            }
         }
 
         selectStatement.close();
-        
+
         return all;
     }
 
@@ -167,15 +190,15 @@ public class MedicalInstitutionMapper extends InstitutionMapper implements Mappe
             insertItem(item);
             medicalInstitutions.add(item);
         }
-        
+
         for (Ticket it : item.getTickets()) {
             ticketMapper.update(it);
         }
-        
+
         for (Feedback it : item.getFeedbacks()) {
             feedbackMapper.update(it);
         }
-        
+
         for (Doctor it : item.getDoctors()) {
             repository.updateUser(it);
         }
@@ -201,10 +224,11 @@ public class MedicalInstitutionMapper extends InstitutionMapper implements Mappe
     public void update() throws SQLException {
         ticketMapper.update();
         feedbackMapper.update();
-        for (MedicalInstitution it : medicalInstitutions)
+        for (MedicalInstitution it : medicalInstitutions) {
             update(it);
+        }
     }
-    
+
     @Override
     public int getInstitutionType() {
         return 0; // is_edu must be 0

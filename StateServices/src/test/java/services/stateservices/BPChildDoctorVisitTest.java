@@ -38,7 +38,7 @@ public class BPChildDoctorVisitTest extends TestCase {
         
         admin = repository.getAdministrator("admin");
         admin.signIn("admin");
-        institution = repository.getMedicalInstitution(3);
+        institution = repository.getMedicalInstitution(6);
         
         representative = repository.getMedicalRepresentative("medr");
         representative.signIn("pass");
@@ -68,8 +68,8 @@ public class BPChildDoctorVisitTest extends TestCase {
 
     @Test
     public void testChildDoctorVisitBP() throws Exception {
-        Date birthDate = new Date(2015, 0, 14);
-        String birthCertificate = "IJ1229394844";
+        Date birthDate = new Date(115, 0, 14);
+        String birthCertificate = "IJ12293949";
         citizen.createChildInfo("F I O", birthCertificate, birthDate);
         child = citizen.getChild(birthCertificate);
         assertTrue(child != null && child.getBirthCertificate().equals(birthCertificate));

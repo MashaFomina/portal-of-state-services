@@ -28,6 +28,7 @@ import services.stateservices.storage.user.UserMapper;
 import services.stateservices.user.Citizen;
 import services.stateservices.user.Doctor;
 import services.stateservices.user.User;
+import java.util.Iterator;
 
 public class EduRequestMapper implements Mapper<EduRequest> {
 
@@ -117,8 +118,27 @@ public class EduRequestMapper implements Mapper<EduRequest> {
     @Override
     // In other mapper we must set institution and user
     public EduRequest findByID(int id) throws SQLException {
-        for (EduRequest it : eduRequests)
-            if (it.getId() == id) return it;
+        for (EduRequest it : eduRequests) {
+            if (it.getId() == id) {
+                // Update fields that can be changed
+                if (!it.isClosed()) {
+                    boolean updated = it.isUpdated();
+                    String selectSQL = "SELECT status, appointment FROM edu_requests WHERE id = ?;";
+                    PreparedStatement selectStatement = connection.prepareStatement(selectSQL);
+                    selectStatement.setInt(1, id);
+                    ResultSet rs = selectStatement.executeQuery();
+                    if (rs.next()) {
+                        EduRequest.Status status = EduRequest.Status.fromString(rs.getString("status"));
+                        Timestamp timestamp = rs.getTimestamp("appointment");
+                        Date appointmentDate = timestamp != null ? new Date(timestamp.getTime()) : null;
+                        it.changeStatus(status);
+                        it.makeAppointment(appointmentDate); 
+                        if (!updated) it.resetUpdated();
+                    }
+                }
+                return it;
+            }
+        }
 
         String selectSQL = "SELECT * FROM edu_requests WHERE id = ?;";
         PreparedStatement selectStatement = connection.prepareStatement(selectSQL);
@@ -179,6 +199,20 @@ public class EduRequestMapper implements Mapper<EduRequest> {
         String deleteSQL = "DELETE FROM edu_requests WHERE id = ? LIMIT 1;";
         PreparedStatement deleteStatement = connection.prepareStatement(deleteSQL);
         deleteStatement.setInt(1, item.getId());
+        deleteStatement.execute();
+        deleteStatement.close();
+    }
+    
+    public void deleteEduRequestsForChild(Child child) throws SQLException {
+        Iterator<EduRequest> i = eduRequests.iterator();
+        while (i.hasNext()) {
+            EduRequest request = i.next(); // must be called before you can call i.remove()
+            if (request.getChild().equals(child))
+                i.remove();
+        }
+        String deleteSQL = "DELETE FROM edu_requests WHERE child = ?;";
+        PreparedStatement deleteStatement = connection.prepareStatement(deleteSQL);
+        deleteStatement.setInt(1, child.getId());
         deleteStatement.execute();
         deleteStatement.close();
     }

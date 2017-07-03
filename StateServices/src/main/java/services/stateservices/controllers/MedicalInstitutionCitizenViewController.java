@@ -51,14 +51,28 @@ public class MedicalInstitutionCitizenViewController extends InstitutionsControl
         canAddFeedbacks = false;
         this.user = user;
         this.isEdu = false;
+        
         setupCities();
         setUpFeedbackTable();
         setUpInstitutionTable();
         setUpDoctorsTable();
         setUpTicketsTable();
+        
         onClickUpdateButton();
     }
 
+    @Override
+    protected void updateTicketsTable() {
+        ObservableList<Struct> tickets = null;
+        try {
+            tickets = FXCollections.observableArrayList(facade.getTicketsForMedicalInstitution(user, institution, doctor));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
+        ticketTable.setItems(tickets);
+    }
+        
     @FXML
     public void onClickUpdateButton() {
         userChilds = facade.getAllChildsForUser(user);
@@ -82,6 +96,11 @@ public class MedicalInstitutionCitizenViewController extends InstitutionsControl
         }
         
         updateInstitutionTable();
+        
+        InstitutionsController.setFocusRefresh(feedbackTable);
+        InstitutionsController.setFocusRefresh(institutionTable);
+        InstitutionsController.setFocusRefresh(doctorsTable);
+        InstitutionsController.setFocusRefresh(ticketTable);
     }
         
     @Override

@@ -13,6 +13,7 @@ import services.stateservices.entities.*;
 import services.stateservices.errors.AlreadyExistsException;
 import services.stateservices.errors.NoFreeSeatsException;
 import services.stateservices.facade.Facade;
+import services.stateservices.facade.Struct;
 import services.stateservices.errors.NoRightsException;
 import services.stateservices.institutions.*;
 import java.text.SimpleDateFormat;
@@ -26,12 +27,12 @@ import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 import java.io.IOException;
 import services.stateservices.controllers.*;
-import services.stateservices.service.NotificationEmaiService;
 
 public class Main extends Application {
     private static Stage mainStage;
     public static Facade facade = new Facade();
     private static Stage stage;
+    private static MainCitizenViewController mcvc;
     //private static Map<String, Stage> stages = new HashMap<>();
     
     public static void main(String[] args) {
@@ -176,8 +177,8 @@ public class Main extends Application {
             String fxmlFile = "/fxml/MainCitizenView.fxml";
             FXMLLoader loader = new FXMLLoader();
             AnchorPane root = (AnchorPane) loader.load(Main.class.getClass().getResourceAsStream(fxmlFile));
-            MainCitizenViewController uvc = loader.getController();
-            uvc.setup(user);
+            mcvc = loader.getController();
+            mcvc.setup(user);
             Scene scene = new Scene(root);
             mainStage.setScene(scene);
             mainStage.setOnCloseRequest(windowEvent -> Platform.exit());
@@ -253,6 +254,9 @@ public class Main extends Application {
     }
    
    public static void showMainStage() {
+       if (mcvc != null) {
+           mcvc.onClickUpdateButton();
+       }
        mainStage.show();
    }
    

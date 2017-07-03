@@ -94,6 +94,10 @@ public class EducationalInstitutionCitizenViewController extends InstitutionsCon
         }
         
         updateInstitutionTable();
+        
+        InstitutionsController.setFocusRefresh(seatsTable);
+        InstitutionsController.setFocusRefresh(feedbackTable);
+        InstitutionsController.setFocusRefresh(institutionTable);
     }
     
     @FXML
@@ -185,7 +189,8 @@ public class EducationalInstitutionCitizenViewController extends InstitutionsCon
                 } else {
                     Alert alert = new Alert(Alert.AlertType.INFORMATION);
                     alert.setTitle("Error");
-                    alert.setHeaderText("Error during saving educational request or connect error! May be all seats in class are busy!");
+                    alert.setHeaderText("Error during saving educational request or connect error! May be all seats in class are busy! Or request in institution already exists or child already enrolled in some institution! Child can be enrolled just in one institution!");
+                    alert.getDialogPane().setMaxWidth(600);
                     alert.showAndWait();
                 }
             } else {

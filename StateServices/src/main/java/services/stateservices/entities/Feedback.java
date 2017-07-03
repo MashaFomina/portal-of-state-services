@@ -38,6 +38,10 @@ public class Feedback {
         return institution;
     }
 
+    public void setInstitution(Institution institution) {
+        this.institution = institution;
+    }
+    
     public User getUser() {
         return user;
     }

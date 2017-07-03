@@ -68,12 +68,12 @@
                <content>
                   <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                      <children>
-                        <TableView fx:id="doctorsTable" layoutX="5.0" layoutY="36.0" prefHeight="481.0" prefWidth="1044.0">
+                        <TableView fx:id="doctorsTable" layoutX="14.0" layoutY="40.0" prefHeight="481.0" prefWidth="934.0">
                            <columns>
                               <TableColumn fx:id="doctorFullNameColumn" prefWidth="211.0" text="Full name" />
                               <TableColumn fx:id="doctorEmailColumn" prefWidth="231.0" text="Email" />
                               <TableColumn fx:id="doctorPositionColumn" prefWidth="183.0" text="Position" />
-                              <TableColumn fx:id="doctorSummaryColumn" prefWidth="328.0" text="Summary" />
+                              <TableColumn fx:id="doctorSummaryColumn" prefWidth="308.0" text="Summary" />
                            </columns>
                         </TableView>
                         <ComboBox fx:id="selectInstitution1" layoutX="113.0" layoutY="2.0" prefWidth="150.0" />
@@ -86,15 +86,15 @@
                <content>
                   <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                      <children>
-                        <TableView fx:id="ticketTable" layoutY="39.0" prefHeight="547.0" prefWidth="1041.0">
+                        <TableView fx:id="ticketTable" layoutX="14.0" layoutY="39.0" prefHeight="475.0" prefWidth="934.0">
                            <columns>
                               <TableColumn fx:id="ticketDateColumn" prefWidth="139.0" text="Date" />
                               <TableColumn fx:id="ticketDoctorColumn" prefWidth="149.0" text="Doctor" />
                               <TableColumn fx:id="ticketCitizenColumn" prefWidth="131.0" text="Citizen" />
-                              <TableColumn fx:id="ticketChildColumn" prefWidth="149.0" text="Child" />
-                              <TableColumn fx:id="ticketVisitedColumn" prefWidth="62.0" text="Visited" />
-                              <TableColumn fx:id="ticketSummary" prefWidth="235.0" text="Summary" />
-                              <TableColumn fx:id="ticketActionColumn" prefWidth="92.0" text="Action" />
+                              <TableColumn fx:id="ticketChildColumn" prefWidth="123.0" text="Child" />
+                              <TableColumn fx:id="ticketVisitedColumn" prefWidth="68.0" text="Visited" />
+                              <TableColumn fx:id="ticketSummary" prefWidth="205.0" text="Summary" />
+                              <TableColumn fx:id="ticketActionColumn" prefWidth="117.0" text="Action" />
                            </columns>
                         </TableView>
                         <Label layoutX="14.0" layoutY="9.0" prefHeight="17.0" prefWidth="108.0" text="Select institution:" />

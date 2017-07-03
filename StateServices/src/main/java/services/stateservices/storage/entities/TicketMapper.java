@@ -8,6 +8,7 @@ import java.util.Date;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.stream.Collectors;
+import org.apache.commons.lang.time.DateUtils;
 import services.stateservices.entities.Child;
 import services.stateservices.entities.Ticket;
 import services.stateservices.institutions.MedicalInstitution;
@@ -28,6 +29,7 @@ public class TicketMapper implements Mapper<Ticket> {
     private static ChildMapper childMapper;
     private static Map<Integer, Integer> userIds;
     private static Map<Integer, Integer> institutionIds;
+    private static Map<Integer, Integer> doctorIds;
     private static StorageRepository repository = null;
 
     public TicketMapper() throws IOException, SQLException {
@@ -43,14 +45,18 @@ public class TicketMapper implements Mapper<Ticket> {
             userIds = new HashMap<>();
         if (institutionIds == null) 
             institutionIds = new HashMap<>();
+        if (doctorIds == null) 
+            doctorIds = new HashMap<>();
     }
 
-    public Integer getUserId(int eduRequestId) {
-        return userIds.get(eduRequestId);
+    public Integer getUserId(int ticketId) {
+        Integer result = userIds.get(ticketId);
+        return (result != null ? result : 0);
     }
     
     public Integer getInstitutionId(int eduRequestId) {
-        return institutionIds.get(eduRequestId);
+        Integer result = institutionIds.get(eduRequestId);
+        return (result != null ? result : 0);
     }
     
     public List<Ticket> getForInstitution(int institution) throws SQLException {
@@ -68,7 +74,7 @@ public class TicketMapper implements Mapper<Ticket> {
         List<Ticket> all = new ArrayList<>();
 
         for (Ticket it : tickets) {
-            if (it.getUser().getId() == user)
+            if (it.getUser() != null && it.getUser().getId() == user)
                 all.add(it);
         }
         
@@ -158,7 +164,36 @@ public class TicketMapper implements Mapper<Ticket> {
     // In other mapper we must set institution and user
     public Ticket findByID(int id) throws SQLException {
         for (Ticket it : tickets) {
-            if (it.getId() == id) return it;
+            if (it.getId() == id) {
+                // Update fields that can be changed
+                if (it.canBeRefused() || !it.isVisited()) {
+                    boolean updated = it.isUpdated();
+                    String selectSQL = "SELECT user, child, visited, summary FROM tickets WHERE id = ?;";
+                    PreparedStatement selectStatement = connection.prepareStatement(selectSQL);
+                    selectStatement.setInt(1, id);
+                    ResultSet rs = selectStatement.executeQuery();
+                    if (rs.next()) {
+                        int userId = rs.getInt("user");
+                        int childId = rs.getInt("child"); 
+                        int visited = rs.getInt("visited");
+                        String summary = rs.getString("summary");
+                        Citizen user = it.getUser();
+                        it.refuseTicket();
+                        if (userId < 1) {
+                            it.acceptTicket(null, null);
+                        }
+                        else {
+                            Child child = childMapper.findByID(childId);
+                            userIds.put(id, userId);
+                            // To avoid recursion we must set new user (if changed) in other mappers
+                            it.acceptTicket((user != null && user.getId() == userId) ? user : null, (childId > 0 && child != null) ? child : null);
+                        }  
+                        it.setVisited(visited == 1, summary); 
+                        if (!updated) it.resetUpdated();
+                    }
+                }
+                return it;
+            }
         }
 
         String selectSQL = "SELECT * FROM tickets WHERE id = ?;";
@@ -185,7 +220,7 @@ public class TicketMapper implements Mapper<Ticket> {
         // To avoid recursion we must set institution and user in other mappers
         if (userDoctor != null && userDoctor.isDoctor()) {
             Doctor doctor = (Doctor) userDoctor;
-            if (userId < 0) {
+            if (userId < 1) {
                 newTicket = new Ticket(doctor, ticketDate);
             }
             else {
@@ -233,7 +268,38 @@ public class TicketMapper implements Mapper<Ticket> {
         deleteStatement.execute();
         deleteStatement.close();
     }
+    
+    public void delete(Doctor doctor, Date ticketsDate) throws SQLException {
+        Iterator<Ticket> i = tickets.iterator();
+        while (i.hasNext()) {
+            Ticket t = i.next(); // must be called before you can call i.remove()
+            if (t.getDoctor().equals(doctor) && (ticketsDate == null || DateUtils.isSameDay(ticketsDate, t.getDate())))
+                i.remove();
+        }
         
+        String deleteSQL = (ticketsDate == null) ? "DELETE FROM tickets WHERE doctor = ?;" : "DELETE FROM tickets WHERE doctor = ? AND (ticket_date BETWEEN ? AND ?);";
+        PreparedStatement deleteStatement = connection.prepareStatement(deleteSQL);
+        deleteStatement.setInt(1, doctor.getId());
+        if (ticketsDate != null) {
+            deleteStatement.setTimestamp(2, new Timestamp(ticketsDate.getTime()));
+            ticketsDate.setHours(23);
+            ticketsDate.setMinutes(59);
+            ticketsDate.setSeconds(59);
+            deleteStatement.setTimestamp(3, new Timestamp(ticketsDate.getTime()));
+        }
+        deleteStatement.execute();
+        deleteStatement.close();
+    }
+        
+    public void cancelTicketsForChild(Child child) throws SQLException {
+        String cancelSQL = "UPDATE tickets SET child = ? WHERE child = ?;";
+        PreparedStatement cancelStatement = connection.prepareStatement(cancelSQL);
+        cancelStatement.setNull(1, java.sql.Types.INTEGER);
+        cancelStatement.setInt(2, child.getId());
+        cancelStatement.execute();
+        cancelStatement.close();
+    }
+    
     @Override
     public void update(Ticket item) throws SQLException {
         if (tickets.contains(item)) {
@@ -299,6 +365,20 @@ public class TicketMapper implements Mapper<Ticket> {
         }
     }
 
+    public void deleteTicketsForDoctor(int doctorId) throws SQLException {
+        Iterator<Ticket> i = tickets.iterator();
+        while (i.hasNext()) {
+            Ticket ticket = i.next(); // must be called before you can call i.remove()
+            if (ticket.getDoctor() != null && ticket.getDoctor().getId() == doctorId)
+                i.remove();
+        }
+
+        String deleteSQL = "DELETE FROM tickets WHERE doctor = ?;";
+        PreparedStatement deleteStatement = connection.prepareStatement(deleteSQL);
+        deleteStatement.setInt(1, doctorId);
+        deleteStatement.execute();
+    }
+        
     @Override
     public void closeConnection() throws SQLException {
         childMapper.closeConnection();

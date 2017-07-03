@@ -16,7 +16,7 @@ import services.stateservices.user.Citizen;
 import services.stateservices.user.User;
 
 public class MedicalInstitution extends Institution {
-    private Set<Doctor> doctors = new HashSet<>();
+    private List<Doctor> doctors = new ArrayList<>();
     private List<Ticket> tickets = new ArrayList<>();
     
     public MedicalInstitution(String title, String city, String district, String telephone, String fax, String address) {
@@ -36,13 +36,21 @@ public class MedicalInstitution extends Institution {
         }
     }
     
-    public void removeDoctor(Doctor doctor) throws NoRightsException {
+    public Set<Citizen> removeDoctor(Doctor doctor) throws NoRightsException {
+        Set<Citizen> citizensOfRemovedTicketsToUpdate = new HashSet<>();
         // Remove tickets of doctor
         Iterator<Ticket> i = tickets.iterator();
+        Citizen user;
         while (i.hasNext()) {
                 Ticket t = i.next(); // must be called before you can call i.remove()
                 if (t.getDoctor().equals(doctor)) {
-                    if (t.getUser() != null) {
+                    user = t.getUser();
+                    if (user != null) {
+                        if (t.canBeRefused()) {
+                            String notification = "Sorry, but your ticket to " + t.getDoctor().getFullName() + " in " + getTitle() + " on " + t.getDate() + " was canceled!";
+                            user.addNotification(notification);
+                            citizensOfRemovedTicketsToUpdate.add(user);
+                        }
                         t.getUser().removeTicket(t);
                     }
                     i.remove();
@@ -52,12 +60,17 @@ public class MedicalInstitution extends Institution {
         if (doctors.contains(doctor)) {
             doctors.remove(doctor);
         }
+        return citizensOfRemovedTicketsToUpdate;
     }
     
-    public Set<Doctor> getDoctors() {
+    public List<Doctor> getDoctors() {
         return doctors;
     }
     
+    public void setDoctors(List<Doctor> doctors) {
+        this.doctors = doctors;
+    }
+        
     public void addTicket(Ticket ticket) throws NoRightsException {
         if (ticket.getInstitution() != null && !ticket.getInstitution().equals(this)) {
             throw new NoRightsException("You have no ability to add ticket of other institution to this institution!");
@@ -75,6 +88,10 @@ public class MedicalInstitution extends Institution {
     
     public List<Ticket> getTickets() {
         return tickets;
+    }
+    
+    public void setTickets(List<Ticket> tickets) {
+        this.tickets = tickets;
     }
     
     public List<Ticket> getTickets(Doctor doctor) throws NoRightsException {

@@ -120,4 +120,8 @@ public class Doctor extends User implements InstitutionRepresentative {
         Feedback feedback = new Feedback(date, this, institution, text, userTo);
         return institution.saveFeedback(feedback);
     }
+    
+    public void setInstitution(MedicalInstitution institution) {
+        this.institution = institution;
+    }
 }

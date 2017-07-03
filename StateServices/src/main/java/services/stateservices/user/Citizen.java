@@ -80,7 +80,8 @@ public class Citizen extends User {
         
     public boolean createChildInfo(String fullName, String birthCertificate, Date birthDate) {
         Child child = new Child(this, fullName, birthCertificate, birthDate);
-        if (!childs.containsKey(child.getBirthCertificate())) {
+        Date currentDate = new Date(); 
+        if (currentDate.after(birthDate) && !childs.containsKey(child.getBirthCertificate())) {
             childs.put(child.getBirthCertificate(), child);
             return true;
         }
@@ -133,8 +134,13 @@ public class Citizen extends User {
         
         if (childs.containsKey(child.getBirthCertificate())) {
             for (EduRequest request : requests) {
-                if (request.getChild().equals(child) && request.getInstitution().equals(institution) && request.getClassNumber() == classNumber) {
-                    return request;
+                // Child can be enrolled in just one institution
+                if (request.getChild().equals(child) && request.isChildEnrolled()) {
+                    return null;
+                }
+                // Request in institution already exists
+                if (request.getChild().equals(child) && request.getInstitution().equals(institution)) {
+                    return null;
                 }
             }
             Date creationDate = new Date();
@@ -205,5 +211,22 @@ public class Citizen extends User {
         if (tickets.contains(ticket)) {
             tickets.remove(ticket);
         }
+    }
+    
+    public void setChilds(Map<String, Child> childs) {
+        this.childs = childs;
+    }
+    
+    public void setTickets(List<Ticket> tickets) {
+        this.tickets = tickets;
+    }
+    
+    public void setEduRequests(List<EduRequest> requests) {
+        this.requests = requests;
+    }
+    
+    @Override
+    public void setNotifications(List<Notification> notifications) {
+        this.notifications = notifications;
     }
 }

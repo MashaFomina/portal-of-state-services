@@ -39,6 +39,7 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.ComboBox;
 import javafx.util.StringConverter;
+import javafx.scene.input.ScrollEvent; 
 
 /**
  *
@@ -354,16 +355,28 @@ public abstract class InstitutionsController {
     protected void addButtonsToDoctorTable() {}
         
     protected void updateTicketsTable() {
+        ticketTable.getItems().clear();
         ObservableList<Struct> tickets = null;
         try {
-            tickets = FXCollections.observableArrayList(facade.getTicketsForMedicalInstitution(institution, doctor));
+            tickets = FXCollections.observableArrayList(facade.getTicketsForMedicalInstitution("", institution, doctor));
         } catch (Exception e) {
             e.printStackTrace();
             return;
         }
         ticketTable.setItems(tickets);
     }
-        
+    
+    public static void setFocusRefresh(TableView<Struct> tableView) {
+        tableView.addEventFilter(ScrollEvent.ANY, scrollEvent -> {
+            tableView.refresh();
+            // close text box
+            //ticketTable.edit(-1, null);
+        });
+        tableView.requestFocus();
+        tableView.getSelectionModel().select(-1);
+        tableView.getFocusModel().focus(-1);
+    }
+    
     protected void setUpTicketsTable() {
         ticketDateColumn.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().get("date")));
         ticketCitizenColumn.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().get("citizen")));

@@ -11,6 +11,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -19,6 +20,7 @@ import java.util.logging.Logger;
 import services.stateservices.entities.*;
 import services.stateservices.errors.NoRightsException;
 import services.stateservices.institutions.EducationalInstitution;
+import services.stateservices.institutions.MedicalInstitution;
 import services.stateservices.storage.Gateway;
 import services.stateservices.storage.Mapper;
 import services.stateservices.storage.StorageRepository;
@@ -63,11 +65,24 @@ public class EducationalInstitutionMapper extends InstitutionMapper implements M
         
         return all;
     }
-        
+    
     @Override
     public EducationalInstitution findByID(int id) throws SQLException {
-        for (EducationalInstitution it : educationalInstitutions)
-            if (it.getId() == id) return it;
+        return findByID(id, false);
+    }
+    
+    public EducationalInstitution findByID(int id, boolean refresh) throws SQLException {
+        EducationalInstitution educationalInstitution = null;
+        
+        for (EducationalInstitution it : educationalInstitutions) {
+            if (it.getId() == id) {
+                educationalInstitution = it;
+                if (!refresh) {
+                    return it;
+                }
+                break;
+            }
+        }
 
         Map<Integer, Integer> seats = new HashMap<>(); // key - class number, value - seats
         Map<Integer, Integer> busySeats = new HashMap<>(); // key - class number, value - busy seats
@@ -100,37 +115,42 @@ public class EducationalInstitutionMapper extends InstitutionMapper implements M
         }
         selectSeatsStatement.close();
 
-        EducationalInstitution newEducationalInstitution = new EducationalInstitution(title, city, district, telephone, fax, address, seats, busySeats);
-        newEducationalInstitution.setId(eid); 
-        educationalInstitutions.add(newEducationalInstitution);
+        if (educationalInstitution == null) {
+            educationalInstitution = new EducationalInstitution(title, city, district, telephone, fax, address, seats, busySeats);
+            educationalInstitution.setId(eid); 
+            educationalInstitutions.add(educationalInstitution);
+        }
+        else {
+            educationalInstitution.edit(title, city, district, telephone, fax, address, seats, busySeats);
+            educationalInstitution.resetUpdated();
+        }
         
         List<EduRequest> eduRequests = eduRequestMapper.findAllForInstitution(id);
-        for (EduRequest it : eduRequests) {
-            try {
-                if (it.getInstitution() == null) {
-                    it.setInstitution(newEducationalInstitution);
+        Iterator<EduRequest> i = eduRequests.iterator();
+        while (i.hasNext()) {
+            EduRequest it = i.next(); // must be called before you can call i.remove()
+            if (it.getInstitution() == null) {
+                it.setInstitution(educationalInstitution);
+            }
+
+            if (it.getParent() == null) {
+                Citizen parent = repository.getCitizen(eduRequestMapper.getParentId(it.getId()));
+                it.setParent(parent);
+                if (it.getChild().getParent() == null) {
+                    it.getChild().setParent(parent);
                 }
-                
-                if (it.getParent() == null ) {
-                    Citizen parent = repository.getCitizen(eduRequestMapper.getParentId(it.getId()));
-                    it.setParent(parent);
-                    if (it.getChild().getParent() == null) it.getChild().setParent(parent);
-                }
-                
-                if (it.getParent() != null ) {
-                    newEducationalInstitution.addEduRequest(it);
-                }
-            }   catch (NoRightsException ex) {
-                Logger.getLogger(EducationalInstitutionMapper.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
+            if (it.getParent() == null) {
+                i.remove();
             }
         }
+        educationalInstitution.setEduRequests(eduRequests);
         
         List<Feedback> feedbacks = feedbackMapper.findAllForInstitution(id);
-        for (Feedback it : feedbacks) {
-            newEducationalInstitution.addFeedback(it);
-        }
+        educationalInstitution.setFeedbacks(feedbacks);
         
-        return newEducationalInstitution;
+        return educationalInstitution;
     }
 
     @Override

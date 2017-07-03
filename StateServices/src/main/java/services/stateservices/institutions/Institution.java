@@ -86,6 +86,10 @@ public abstract class Institution {
         return feedbacks;
     }
     
+    public void setFeedbacks(List<Feedback> feedbacks) {
+        this.feedbacks = feedbacks;
+    }
+    
     public abstract boolean saveFeedback(Feedback feedback) throws NoRightsException;
     
     public void addFeedback(Feedback feedback) {
